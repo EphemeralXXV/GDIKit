@@ -8,6 +8,8 @@
 
 class Checkbox : public Widget {
     public:
+        Checkbox(const std::wstring& label = L"");
+
         bool checked;
         std::wstring text;
         
@@ -16,11 +18,10 @@ class Checkbox : public Widget {
         Color hoverColor;
         Color textColor;
 
-        std::function<void(bool)> onToggle; // Called when checkbox is toggled
-
-        Checkbox(const std::wstring& label);
-
         void Render(HDC hdc) override;
-        void OnMouseDown(POINT p);
-        void OnMouseUp(POINT p) override;
+
+        void SetOnToggle(std::function<void(bool)> cb);
+
+    private:
+        std::function<void(bool)> onToggle; // Called when checkbox is toggled
 };

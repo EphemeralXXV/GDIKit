@@ -4,17 +4,20 @@
 #include <memory>
 
 #include "Widget.h"
+#include "Button.h"
 #include "Color.h"
 #include "LayoutContext.h"
 
 using WidgetPtr = std::shared_ptr<Widget>;
+using ButtonPtr = std::shared_ptr<Button>;
 
 class Menu : public Widget {
     public:
         // Constructor
-        Menu(const std::wstring &t);
+        Menu(const std::wstring &t = L"Menu");
 
-        std::vector<WidgetPtr> children;
+        std::vector<WidgetPtr> headerChildren;  // Title bar elements
+        std::vector<WidgetPtr> bodyChildren;    // Main content
 
         // Window state
         bool isCollapsed;
@@ -33,7 +36,6 @@ class Menu : public Widget {
         // Appearance
         Color background;
         bool drawBackground;
-        bool clipChildren;
 
         // Resize handle in the bottom-right of the menu
         RECT ResizeHandleRect() const;
@@ -41,10 +43,11 @@ class Menu : public Widget {
 
         // --- Child management --------------------------------------------------
         WidgetPtr titleBar;
-        WidgetPtr closeButton;
-        WidgetPtr collapseButton;
+        ButtonPtr closeButton;
+        ButtonPtr collapseButton;
         
-        void AddChild(const WidgetPtr &child);
+        void AddHeaderChild(const WidgetPtr &child);
+        void AddBodyChild(const WidgetPtr &child);
         void RemoveAll();
         
         // Create children immediately
@@ -65,11 +68,6 @@ class Menu : public Widget {
 
         // --- Rendering ---------------------------------------------------------
         void Render(HDC hdc) override;
-
-        // --- Event forwarding --------------------------------------------------
-        void OnMouseDown(POINT p) override;
-        void OnMouseMove(POINT p) override;
-        void OnMouseUp(POINT p) override;
 
     private:
         LayoutContext currentLayout;

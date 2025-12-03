@@ -14,6 +14,7 @@ Slider::Slider(
     float val = 0.5f
 ) :
     label(label),
+    font(nullptr),
     minValue(minVal),
     maxValue(maxVal),
     step(step),
@@ -27,7 +28,36 @@ Slider::Slider(
     hoverColor(Color::FromRGB(220, 220, 220)),
     dragColor(Color::FromRGB(150, 150, 255)),
     isDragging(false)
-{}
+{
+    AddMouseListener([this](const MouseEvent& e) {
+        switch(e.type) {
+            case MouseEventType::Down: {
+                // React also to clicks on the track itself
+                // Not using MouseInRect, because the Slider AbsRect...
+                // ...doesn't account for the label offset
+                RECT trackRect = HandleRect();
+                trackRect.left = AbsX();
+                trackRect.right = AbsX() + width;
+                if(!PtInRect(&trackRect, e.pos)) {
+                    break;
+                }
+                isDragging = true;
+                UpdateValueFromMouse(e.pos.x);
+                break;
+            }
+
+            case MouseEventType::Move:
+                if(isDragging) {
+                    UpdateValueFromMouse(e.pos.x);
+                }
+                break;
+
+            case MouseEventType::Up:
+                isDragging = false;
+                break;
+        }
+    });
+}
 
 // Compute handle rect in absolute coordinates
 RECT Slider::HandleRect() const {
@@ -43,7 +73,7 @@ void Slider::ComputeSliderOffsetY(HDC hdc) {
         sliderOffsetY = 0;
         return;
     }
-    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    HFONT oldFont = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
     int textHeight = tm.tmHeight;
@@ -58,6 +88,11 @@ void Slider::Render(HDC hdc) {
 
     // Compute text offset if needed
     ComputeSliderOffsetY(hdc);
+
+    // Adjust height to label offset
+    int correctedHeight = sliderOffsetY + preferredHeight;
+    if(height != correctedHeight)
+        SetPosSize(x, y, width, correctedHeight);
 
     // Track
     RECT track = {
@@ -124,30 +159,6 @@ void Slider::UpdateValueFromMouse(int mouseX) {
     }
 }
 
-void Slider::OnMouseMove(POINT p) {
-    if(!enabled) return;
-
-    if(isDragging) UpdateValueFromMouse(p.x);
-}
-
-void Slider::OnMouseDown(POINT p) {
-    if(!enabled) return;
-
-    // React also to clicks on the track itself
-    RECT trackRect = HandleRect();
-    trackRect.left = AbsX();
-    trackRect.right = AbsX() + width;
-    if(!PtInRect(&trackRect, p)) return;
-
-    isDragging = true;
-    UpdateValueFromMouse(p.x);
-}
-
-void Slider::OnMouseUp(POINT p) {
-    if(!enabled) return;
-
-    if(isDragging) {
-        UpdateValueFromMouse(p.x);
-        isDragging = false;
-    }
+void Slider::SetOnValueChanged(std::function<void(float)> cb) {
+    onValueChanged = cb;
 }

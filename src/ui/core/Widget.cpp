@@ -1,12 +1,14 @@
 #include "Widget.h"
 
-// --- Constructor / Destructor -------------------------------------
+// Constructor
 Widget::Widget() :
+    parent(nullptr), rect({0, 0, 0, 0}),
     x(0), y(0), width(0), height(0),
     preferredWidth(0), preferredHeight(0),
     visible(true), enabled(true),
     hovered(false), pressed(false),
-    parent(nullptr), rect({0, 0, 0, 0})
+    mouseDownInside(false),
+    clipChildren(false)
 {}
 
 // --- Geometry -----------------------------------------------------
@@ -69,24 +71,50 @@ int Widget::GetLayoutHeight() const {
 
 // --- Mouse event handlers -------------------------------------------
 void Widget::OnMouseMove(POINT p) {
-    hovered = MouseInRect(p);
+    bool wasHovered = hovered; // read old state
+    hovered = MouseInRect(p);  // read current state
+
+    if(hovered && !wasHovered) FireMouseEvent({MouseEventType::Enter, p, 1});
+    if(!hovered && wasHovered) FireMouseEvent({MouseEventType::Leave, p, 1});
+    // Fire Move also if pressed - in case of dragging, for example
+    if(hovered || pressed) FireMouseEvent({MouseEventType::Move, p, 1});
 }
 void Widget::OnMouseDown(POINT p) {
     if(!enabled) return;
-    if(MouseInRect(p)) pressed = true;
+    if(MouseInRect(p)) {
+        pressed = true;
+        mouseDownInside = true; // track click start
+        FireMouseEvent({MouseEventType::Down, p, 1});
+    }
 }
 void Widget::OnMouseUp(POINT p) {
     if(!enabled) return;
-    if(pressed && MouseInRect(p)) {
-        // default: no-op. Derived widgets may override to trigger actions.
+    if(pressed) {
+        // Let MouseUp happen outside widget, e.g. to cancel selection
+        FireMouseEvent({MouseEventType::Up, p, 1});
+        if(mouseDownInside && MouseInRect(p)) {
+            FireMouseEvent({MouseEventType::Click, p, 1});
+        }
     }
     pressed = false;
+    mouseDownInside = false;
 }
 
 // Test if cursor currently over widget
 bool Widget::MouseInRect(POINT p) const {
-    return p.x >= AbsX() && p.x <= AbsRight() &&
-        p.y >= AbsY() && p.y <= AbsBottom();
+    RECT clip = AbsRect();
+
+    // Calculate true hit area if clipped by any of the ancestors
+    const Widget* ancestor = parent;
+    while(ancestor) {
+        if(ancestor->clipChildren) {
+            RECT parentRect = ancestor->AbsRect();
+            IntersectRect(&clip, &clip, &parentRect);
+        }
+        ancestor = ancestor->parent;
+    }
+
+    return PtInRect(&clip, p);
 }
 
 // --- Rendering ------------------------------------------------------

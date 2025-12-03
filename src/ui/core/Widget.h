@@ -1,7 +1,15 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include <windows.h>
+
+enum class MouseEventType { Enter, Leave, Move, Down, Up, Click };
+struct MouseEvent {
+    MouseEventType type;
+    POINT pos;  // relative to widget
+    int button; // left=1, right=2
+};
 
 class Widget {
     public:
@@ -25,6 +33,12 @@ class Widget {
         bool enabled;
         bool hovered;
         bool pressed;
+        bool mouseDownInside; // tracks if mouse click began within widget
+
+        bool clipChildren;
+
+        // Mouse listeners
+        std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
 
         // --- Geometry -----------------------------------------------------
         // Absolute coordinate getters (relative => absolute)
@@ -47,14 +61,37 @@ class Widget {
         int GetLayoutWidth() const;
         int GetLayoutHeight() const;
         
-        // --- Mouse event handlers -----------------------------------------
-        virtual void OnMouseMove(POINT p);
-        virtual void OnMouseDown(POINT p);
-        virtual void OnMouseUp(POINT p);
-        
         // Test if cursor currently over widget
         bool MouseInRect(POINT p) const;
 
+        void AddMouseListener(std::function<void(const MouseEvent&)> callback) {
+            mouseListeners.push_back(callback);
+        }
+
+        // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
+        // Should probably use a friend class in the future?
+        void FeedMouseEvent(const MouseEvent& e) {
+            switch(e.type) {
+                case MouseEventType::Enter:
+                case MouseEventType::Leave:
+                case MouseEventType::Move:  OnMouseMove(e.pos); break;
+                case MouseEventType::Down:  OnMouseDown(e.pos); break;
+                case MouseEventType::Click:
+                case MouseEventType::Up:    OnMouseUp(e.pos);   break;
+            }
+        }
+
         // --- Rendering ---
         virtual void Render(HDC hdc);
+
+    protected:
+        // --- Mouse event handlers -----------------------------------------
+        void FireMouseEvent(const MouseEvent& e) {
+            for(auto& listener : mouseListeners)
+                listener(e);
+        }
+
+        virtual void OnMouseMove(POINT p);
+        virtual void OnMouseDown(POINT p);
+        virtual void OnMouseUp(POINT p);
 };

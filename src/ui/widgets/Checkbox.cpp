@@ -3,14 +3,22 @@
 #include "Checkbox.h"
 #include "Color.h"
 
-Checkbox::Checkbox(const std::wstring& label = L"") :
+Checkbox::Checkbox(const std::wstring& label) :
     text(label),
     checked(false),
     boxColor(Color::FromARGB(255, 50, 50, 50)),
     checkColor(Color::FromARGB(255, 20, 110, 220)),
     hoverColor(Color::FromARGB(255, 80, 80, 80)),
     textColor(Color::FromRGB(255, 255, 255))
-{}
+{
+    AddMouseListener([this](const MouseEvent& e) {
+        if(e.type == MouseEventType::Click) {
+            OutputDebugStringA(MouseInRect(e.pos) ? "!!!MOUSEINRECT TRUE!!!\n" : "!!!MOUSEINRECT FALSE!!!\n");
+            checked = !checked;
+            if(onToggle) onToggle(checked); // Fire user-provided callback
+        }
+    });
+}
 
 void Checkbox::Render(HDC hdc) {
     if(!visible) return;
@@ -44,18 +52,6 @@ void Checkbox::Render(HDC hdc) {
     RestoreDC(hdc, saved);
 }
 
-void Checkbox::OnMouseDown(POINT p) {
-    if(!enabled) return;
-    if(MouseInRect(p)) pressed = true;
-}
-
-void Checkbox::OnMouseUp(POINT p) {
-    if(!enabled) return;
-
-    // Toggle checked only if mouse up while over the checkbox
-    if(pressed && MouseInRect(p)) {
-        checked = !checked;
-        if(onToggle) onToggle(checked); // Fire user-provided callback
-    }
-    pressed = false;
+void Checkbox::SetOnToggle(std::function<void(bool)> cb) {
+    onToggle = cb;
 }

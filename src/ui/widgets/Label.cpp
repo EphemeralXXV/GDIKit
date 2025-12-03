@@ -3,7 +3,7 @@
 #include "Label.h"
 #include "Color.h"
 
-Label::Label(const std::wstring &t = L"") : 
+Label::Label(const std::wstring &t) : 
     text(t),
     font(nullptr),
     textColor(Color::FromRGB(255,255,255))

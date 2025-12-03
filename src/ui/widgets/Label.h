@@ -7,16 +7,11 @@
 
 class Label : public Widget {
     public:
+        Label(const std::wstring &t = L"");
+
         std::wstring text;
         HFONT font; // Optional custom font
         Color textColor;
 
-        Label(const std::wstring &t);
-
         void Render(HDC hdc) override;
-
-        // Labels accept no input
-        void OnMouseDown(POINT) override {}
-        void OnMouseUp(POINT) override {}
-        void OnMouseMove(POINT) override {}
 };

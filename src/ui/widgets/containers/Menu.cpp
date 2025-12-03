@@ -1,8 +1,9 @@
 #include "Menu.h"
+#include "Button.h"
 
 using WidgetPtr = std::shared_ptr<Widget>;
 
-Menu::Menu(const std::wstring &t = L"Menu") :
+Menu::Menu(const std::wstring &t) :
     isCollapsed(false),
     isDragging(false),
     isResizing(false),
@@ -13,10 +14,69 @@ Menu::Menu(const std::wstring &t = L"Menu") :
     showTitleBar(true),
     titleBarHeight(22),
     background(Color::FromARGB(180, 0, 0, 0)),
-    drawBackground(false),
-    clipChildren(true) // Basically overflow: hidden
+    drawBackground(false)
 {
+    clipChildren = true;
     InitInternalElements();
+    AddMouseListener([this](const MouseEvent& e) {
+        POINT p = e.pos;
+
+        switch(e.type) {
+            case MouseEventType::Move:
+                if(isDragging) {
+                    SetPosSize(p.x - dragOffset.x, p.y - dragOffset.y, width, height);
+                }
+                if(isResizing) {
+                    int newWidth = p.x - AbsX() + resizeOffset.x;
+                    int newHeight = p.y - AbsY() + resizeOffset.y;
+                    int newW = std::max(newWidth, 50);
+                    int newH = std::max(newHeight, 50);
+                    SetPosSize(x, y, newW, newH);
+                    UpdateInternalLayout();
+                }
+                break;
+
+            case MouseEventType::Down: {
+                // Resize handle
+                RECT resizeHandleAbsRect = ResizeHandleRect();
+                if(PtInRect(&resizeHandleAbsRect, p)) {
+                    isResizing = true;
+                    resizeOffset.x = AbsRight() - p.x;
+                    resizeOffset.y = AbsBottom() - p.y;
+                    return;
+                }
+                // Title bar drag -- navigation buttons take precedence!
+                if(titleBar->MouseInRect(p) &&
+                    !collapseButton->MouseInRect(p) &&
+                    !closeButton->MouseInRect(p)
+                ) {
+                    isDragging = true;
+                    dragOffset.x = p.x - AbsX();
+                    dragOffset.y = p.y - AbsY();
+                    return;
+                }
+                break;
+            }
+            
+            case MouseEventType::Up:
+                isDragging = false;
+                isResizing = false;
+                break;
+        }
+        
+        // Header children always get events
+        for(auto it = headerChildren.rbegin(); it != headerChildren.rend(); ++it) {
+            // Feed the mouse event directly to children
+            (*it)->FeedMouseEvent(e);
+        }
+        
+        if(!isCollapsed) {
+            for(auto it = bodyChildren.rbegin(); it != bodyChildren.rend(); ++it) {
+                // Feed the mouse event directly to children
+                (*it)->FeedMouseEvent(e);
+            }
+        }
+    });
 }
 
 // Resize handle in the bottom-right of the menu
@@ -62,26 +122,36 @@ void Menu::RenderResizeHandle(HDC hdc) const { // Classic triangle-like diagonal
 }
 
 // --- Child management --------------------------------------------------
-WidgetPtr titleBar;
-WidgetPtr closeButton;
-WidgetPtr collapseButton;
-
-void Menu::AddChild(const WidgetPtr &child) {
+void Menu::AddHeaderChild(const WidgetPtr &child) {
     child->parent = this;
-    children.push_back(child);
+    headerChildren.push_back(child);
 }
-void Menu::RemoveAll() { children.clear(); }
+void Menu::AddBodyChild(const WidgetPtr &child) {
+    child->parent = this;
+    bodyChildren.push_back(child);
+}
+void Menu::RemoveAll() {
+    headerChildren.clear();
+    bodyChildren.clear();
+}
 
 // Create children immediately
 void Menu::InitInternalElements() {
     titleBar = std::make_shared<Widget>();
-    AddChild(titleBar);
+    AddHeaderChild(titleBar);
 
-    closeButton = std::make_shared<Widget>();
-    AddChild(closeButton);
+    closeButton = std::make_shared<Button>(L"×");
+    closeButton->SetOnClick([&](){
+        visible = false;
+    });
+    AddHeaderChild(closeButton);
 
-    collapseButton = std::make_shared<Widget>();
-    AddChild(collapseButton);
+    collapseButton = std::make_shared<Button>(L"▾");
+    collapseButton->SetOnClick([&](){
+        isCollapsed = !isCollapsed;
+        collapseButton->text = isCollapsed ? L"▸" : L"▾";
+    });
+    AddHeaderChild(collapseButton);
 }
 
 // Update children geometry dynamically
@@ -91,7 +161,7 @@ void Menu::UpdateInternalLayout() {
     collapseButton->SetPosSize(width - 40, 2, 18, 18);
 
     // Propagate to child widgets if needed
-    for(auto& c : children)
+    for(auto& c : bodyChildren)
         c->UpdateInternalLayout();
 }
 
@@ -113,9 +183,9 @@ void Menu::ApplyLayout(Widget* w) {
     currentLayout.cursorY += lHeight + currentLayout.spacingY;
 }
 
-// AddChild wrapper for containers with layout -- SoC preservation just in case
+// AddBodyChild wrapper for containers with layout -- SoC preservation just in case
 void Menu::AddChildWithLayout(const WidgetPtr& child) {
-    AddChild(child);
+    AddBodyChild(child);
     ApplyLayout(child.get());
 }
 
@@ -145,15 +215,6 @@ void Menu::Render(HDC hdc) {
         SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, RGB(220,220,220));
         TextOutW(hdc, titleBar->AbsX() + 6, titleBar->AbsY() + 4, title.c_str(), (int)title.size());
-
-        // Draw "X"
-        RECT closeButtonRect = closeButton->AbsRect();
-        DrawTextW(hdc, L"×", 1, &closeButtonRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-        // Draw collapse arrow ▾ or ▸
-        WCHAR arrow = isCollapsed ? L'▸' : L'▾';
-        RECT collapseButtonRect = collapseButton->AbsRect();
-        DrawTextW(hdc, &arrow, 1, &collapseButtonRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
 
     // --- Draw menu background if expanded ---
@@ -164,101 +225,23 @@ void Menu::Render(HDC hdc) {
         DeleteObject(br);
     }
 
-    // Draw resize handle
-    RenderResizeHandle(hdc);
-
     // Clip children to menu bounds if overflow is hidden
     if(clipChildren) {
         RECT absRect = AbsRect();
-        IntersectClipRect(hdc, absRect.left, absRect.top + titleBarHeight, absRect.right, absRect.bottom);
+        IntersectClipRect(hdc, absRect.left, absRect.top, absRect.right, absRect.bottom);
     }
 
-    // Render children in order (if menu is expanded)
+    for(auto &c : headerChildren) {
+        if(c->visible) c->Render(hdc);
+    }
     if(!isCollapsed) {
-        for(auto &c : children) {
+        // Render children in order (if menu is expanded)
+        for(auto &c : bodyChildren) {
             if(c->visible) c->Render(hdc);
         }
+        // Draw resize handle
+        RenderResizeHandle(hdc);
     }
 
     RestoreDC(hdc, saved);
-}
-
-// --- Event forwarding --------------------------------------------------
-void Menu::OnMouseDown(POINT p) {
-    if(!visible || !MouseInRect(p)) return;
-
-    // Resizing via bottom-right handle
-    RECT resizeHandleRect = ResizeHandleRect();
-    if(PtInRect(&resizeHandleRect, p)) {
-        isResizing = true;
-        resizeOffset.x = AbsRight() - p.x;
-        resizeOffset.y = AbsBottom() - p.y;
-        return;
-    }
-
-    // Dragging via title bar
-    RECT titleBarRect = titleBar->AbsRect();
-    if(PtInRect(&titleBarRect, p)) {
-        RECT closeButtonRect = closeButton->AbsRect();
-        if(PtInRect(&closeButtonRect, p)) {
-            // Close the window
-            visible = false;
-            return;
-        }
-
-        RECT collapseButtonRect = collapseButton->AbsRect();
-        if(PtInRect(&collapseButtonRect, p)) {
-            isCollapsed = !isCollapsed;
-            return;
-        }
-
-        // Start dragging
-        isDragging = true;
-        dragOffset.x = p.x - AbsX(); // Must use absolute coords for mouse events
-        dragOffset.y = p.y - AbsY();
-        return;
-    }
-
-    // Default: forward to children if visible and not collapsed
-    if(!isCollapsed) {
-        for (auto it = children.rbegin(); it != children.rend(); ++it)
-            (*it)->OnMouseDown(p);
-    }
-}
-
-void Menu::OnMouseMove(POINT p) {
-    if(!visible) return;
-
-    if(isResizing) {
-        int newWidth = p.x - AbsX() + resizeOffset.x;
-        int newHeight = p.y - AbsY() + resizeOffset.y;
-
-        width = std::max(newWidth, 50);   // minimum width safeguard
-        height = std::max(newHeight, 50); // minimum height safeguard
-        UpdateInternalLayout();
-        return;
-    }
-
-    if(isDragging) {
-        SetPosSize(p.x - dragOffset.x, p.y - dragOffset.y, width, height);
-        return;
-    }
-
-    // Forward to children
-    if(!isCollapsed) {
-        for (auto it = children.rbegin(); it != children.rend(); ++it)
-            (*it)->OnMouseMove(p);
-    }
-}
-
-void Menu::OnMouseUp(POINT p) {
-    if(!visible) return;
-    isDragging = false;
-    isResizing = false;
-
-    // Forward to children
-    if(!isCollapsed) {
-        for (auto it = children.rbegin(); it != children.rend(); ++it)
-            (*it)->OnMouseUp(p);
-    }
 }

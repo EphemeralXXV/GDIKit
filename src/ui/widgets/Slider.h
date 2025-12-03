@@ -9,12 +9,21 @@
 // --- Slider ------------------------------------------------------------
 class Slider : public Widget {
     public:
+        Slider(
+            const std::wstring& label,
+            float minVal,
+            float maxVal,
+            float step,
+            float val
+        );
+
         float minValue;
         float maxValue;
         float step;
         float value;
 
         std::wstring label;
+        HFONT font;
         bool showValue;
         bool showLabel;
 
@@ -29,11 +38,6 @@ class Slider : public Widget {
         Color dragColor;
 
         bool isDragging;
-        std::function<void(float)> onValueChanged;
-
-        Slider(
-            const std::wstring& label, float minVal, float maxVal, float step, float val
-        );
 
         // Compute handle rect in absolute coordinates
         RECT HandleRect() const;
@@ -44,7 +48,8 @@ class Slider : public Widget {
 
         void UpdateValueFromMouse(int mouseX);
 
-        void OnMouseMove(POINT p) override;
-        void OnMouseDown(POINT p) override;
-        void OnMouseUp(POINT p) override;
+        void SetOnValueChanged(std::function<void(float)> cb);
+
+    private:
+        std::function<void(float)> onValueChanged;
 };

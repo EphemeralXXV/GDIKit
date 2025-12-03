@@ -8,6 +8,8 @@
 
 class Button : public Widget {
     public:
+        Button(const std::wstring &t = L"Button");
+
         std::wstring text;
         HFONT font;
         Color backColor;
@@ -16,12 +18,10 @@ class Button : public Widget {
         Color borderColor;
         Color textColor;
 
-        std::function<void()> onClick;
-
-        Button(const std::wstring &t);
-
         void Render(HDC hdc) override;
 
-        void OnMouseDown(POINT p) override;
-        void OnMouseUp(POINT p) override;
+        void SetOnClick(std::function<void()> cb);
+
+    private:
+        std::function<void()> onClick;
 };

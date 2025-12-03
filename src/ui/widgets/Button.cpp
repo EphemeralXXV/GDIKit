@@ -4,7 +4,7 @@
 #include "Color.h"
 #include "Button.h"
 
-Button::Button(const std::wstring &t = L"Button") :
+Button::Button(const std::wstring &t) :
     text(t),
     font(nullptr),
     backColor(Color::FromARGB(200,30,30,30)),
@@ -12,7 +12,13 @@ Button::Button(const std::wstring &t = L"Button") :
     pressColor(Color::FromARGB(255,20,110,220)),
     borderColor(Color::FromRGB(0,0,0)),
     textColor(Color::FromRGB(255,255,255))
-{}
+{
+    AddMouseListener([this](const MouseEvent& e) {
+        if(e.type == MouseEventType::Click) {
+            if(onClick) onClick();
+        }
+    });
+}
 
 void Button::Render(HDC hdc) {
     if(!visible) return;
@@ -48,20 +54,6 @@ void Button::Render(HDC hdc) {
     RestoreDC(hdc, saved);
 }
 
-void Button::OnMouseDown(POINT p) {
-    if(!enabled) return;
-
-    RECT r = AbsRect();
-    if(PtInRect(&r, p)) {
-        pressed = true;
-    }
-}
-void Button::OnMouseUp(POINT p) {
-    if(!enabled) return;
-
-    if(pressed && MouseInRect(p)) {
-        // Fire click
-        if(onClick) onClick();
-    }
-    pressed = false;
+void Button::SetOnClick(std::function<void()> cb) {
+    onClick = cb;
 }
