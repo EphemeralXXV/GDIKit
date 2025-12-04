@@ -8,8 +8,34 @@
 
 class Button : public Widget {
     public:
+        // Constructor
         Button(const std::wstring &t = L"Button");
 
+        // Appearance
+        std::wstring GetText() const { return text; }
+        void SetText(std::wstring newText) { text = newText; }
+
+        HFONT GetFont() const { return font; }
+        void SetFont(HFONT newFont) { font = newFont; }
+
+        Color GetBackColor()    const { return backColor; }
+        Color GetHoverColor()   const { return hoverColor; }
+        Color GetPressColor()   const { return pressColor; }
+        Color GetBorderColor()  const { return borderColor; }
+        Color GetTextColor()    const { return textColor; }
+        void SetBackColor(Color newColor)   { backColor = newColor; }
+        void SetHoverColor(Color newColor)  { hoverColor = newColor; }
+        void SetPressColor(Color newColor)  { pressColor = newColor; }
+        void SetBorderColor(Color newColor) { borderColor = newColor; }
+        void SetTextColor(Color newColor)   { textColor = newColor; }
+
+        // Rendering
+        void Render(HDC hdc) override;
+
+        // Behavior
+        void SetOnClick(std::function<void()> cb);
+
+    private:
         std::wstring text;
         HFONT font;
         Color backColor;
@@ -18,10 +44,5 @@ class Button : public Widget {
         Color borderColor;
         Color textColor;
 
-        void Render(HDC hdc) override;
-
-        void SetOnClick(std::function<void()> cb);
-
-    private:
         std::function<void()> onClick;
 };

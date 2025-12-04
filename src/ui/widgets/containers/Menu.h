@@ -16,45 +16,20 @@ class Menu : public Widget {
         // Constructor
         Menu(const std::wstring &t = L"Menu");
 
-        std::vector<WidgetPtr> headerChildren;  // Title bar elements
-        std::vector<WidgetPtr> bodyChildren;    // Main content
-
-        // Window state
-        bool isCollapsed;
-        bool isDragging;
-        bool isResizing;
-        POINT dragOffset;
-        POINT resizeOffset;
-
-        int resizeHandleSize;
-
-        // Title bar
-        std::wstring title;
-        bool showTitleBar;
-        int titleBarHeight;
-
         // Appearance
-        Color background;
-        bool drawBackground;
+        bool IsCollapsed() const { return isCollapsed; }
+        void SetCollapsed(bool collapsed) { isCollapsed = collapsed; }
 
-        // Resize handle in the bottom-right of the menu
-        RECT ResizeHandleRect() const;
-        void RenderResizeHandle(HDC hdc) const;
+        void SetTitle(const std::wstring &t) { title = t; }
+        void SetShowTitleBar(bool show) { showTitleBar = show; }
 
-        // --- Child management --------------------------------------------------
-        WidgetPtr titleBar;
-        ButtonPtr closeButton;
-        ButtonPtr collapseButton;
-        
+        void SetBackgroundColor(const Color &color) { backgroundColor = color; }
+        void SetDrawBackground(bool draw) { drawBackground = draw; }
+
+        // --- Child management --------------------------------------------------        
         void AddHeaderChild(const WidgetPtr &child);
         void AddBodyChild(const WidgetPtr &child);
         void RemoveAll();
-        
-        // Create children immediately
-        void InitInternalElements();
-
-        // Update children geometry dynamically
-        void UpdateInternalLayout() override;
 
         // --- Layout - should move to generic container struct once it exists ---
         void BeginLayout(int startX, int startY);
@@ -69,6 +44,42 @@ class Menu : public Widget {
         // --- Rendering ---------------------------------------------------------
         void Render(HDC hdc) override;
 
+    protected:
+        // Update children geometry dynamically
+        void UpdateInternalLayout() override;
+
     private:
         LayoutContext currentLayout;
+
+        // Resize handle in the bottom-right of the menu
+        RECT ResizeHandleRect() const;
+        void RenderResizeHandle(HDC hdc) const;
+
+        // Children
+        std::vector<WidgetPtr> headerChildren;  // Title bar elements
+        std::vector<WidgetPtr> bodyChildren;    // Main content
+
+        WidgetPtr titleBar;
+        ButtonPtr closeButton;
+        ButtonPtr collapseButton;
+        
+        // Create children immediately
+        void InitInternalElements();
+
+        // Window state
+        bool isCollapsed;
+        bool isDragging;
+        bool isResizing;
+        POINT dragOffset;
+        POINT resizeOffset;
+        int resizeHandleSize;
+
+        // Title bar
+        std::wstring title;
+        bool showTitleBar;
+        int titleBarHeight;
+
+        // Appearance
+        Color backgroundColor;
+        bool drawBackground;
 };

@@ -13,7 +13,7 @@ Menu::Menu(const std::wstring &t) :
     title(t),
     showTitleBar(true),
     titleBarHeight(22),
-    background(Color::FromARGB(180, 0, 0, 0)),
+    backgroundColor(Color::FromARGB(180, 0, 0, 0)),
     drawBackground(false)
 {
     SetChildrenClipping(true);
@@ -142,14 +142,14 @@ void Menu::InitInternalElements() {
 
     closeButton = std::make_shared<Button>(L"×");
     closeButton->SetOnClick([&](){
-        visible = false;
+        SetVisible(false);
     });
     AddHeaderChild(closeButton);
 
     collapseButton = std::make_shared<Button>(L"▾");
     collapseButton->SetOnClick([&](){
         isCollapsed = !isCollapsed;
-        collapseButton->text = isCollapsed ? L"▸" : L"▾";
+        collapseButton->SetText(isCollapsed ? L"▸" : L"▾");
     });
     AddHeaderChild(collapseButton);
 }
@@ -219,7 +219,7 @@ void Menu::Render(HDC hdc) {
 
     // --- Draw menu background if expanded ---
     if(drawBackground && !isCollapsed) {
-        HBRUSH br = CreateSolidBrush(background.toCOLORREF());
+        HBRUSH br = CreateSolidBrush(backgroundColor.toCOLORREF());
         RECT bg{ AbsX(), AbsY() + titleBarHeight, AbsX() + width, AbsY() + height };
         FillRect(hdc, &bg, br);
         DeleteObject(br);

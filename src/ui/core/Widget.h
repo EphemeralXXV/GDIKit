@@ -22,10 +22,10 @@ class Widget {
 
         // Visual state
         bool IsVisible() const { return visible; }
-        void SetVisible(bool visible) { visible = visible; }
+        void SetVisible(bool visible) { this->visible = visible; }
 
         bool IsEnabled() const { return enabled; }
-        void SetEnabled(bool enabled) { enabled = enabled; }
+        void SetEnabled(bool enabled) { this->enabled = enabled; }
 
         bool IsClippingChildren() const { return clipChildren; }
         void SetChildrenClipping(bool clipChildren) { clipChildren = clipChildren; }
@@ -65,22 +65,11 @@ class Widget {
         // Test if cursor currently over widget
         bool MouseInRect(POINT p) const;
 
-        void AddMouseListener(std::function<void(const MouseEvent&)> callback) {
-            mouseListeners.push_back(callback);
-        }
+        void AddMouseListener(std::function<void(const MouseEvent&)> callback);
 
         // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
         // Should probably use a friend class in the future?
-        void FeedMouseEvent(const MouseEvent& e) {
-            switch(e.type) {
-                case MouseEventType::Enter:
-                case MouseEventType::Leave:
-                case MouseEventType::Move:  OnMouseMove(e.pos); break;
-                case MouseEventType::Down:  OnMouseDown(e.pos); break;
-                case MouseEventType::Click:
-                case MouseEventType::Up:    OnMouseUp(e.pos);   break;
-            }
-        }
+        void FeedMouseEvent(const MouseEvent& e);
 
         // --- Rendering ---
         virtual void Render(HDC hdc);
@@ -112,10 +101,7 @@ class Widget {
         // --- Mouse events  ------------------------------------------------
         std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
 
-        void FireMouseEvent(const MouseEvent& e) {
-            for(auto& listener : mouseListeners)
-                listener(e);
-        }
+        void FireMouseEvent(const MouseEvent& e);
 
         virtual void OnMouseMove(POINT p);
         virtual void OnMouseDown(POINT p);

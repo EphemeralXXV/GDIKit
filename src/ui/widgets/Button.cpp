@@ -47,7 +47,7 @@ void Button::Render(HDC hdc) {
     // Text
     SetBkMode(hdc, TRANSPARENT);
     HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
-    SetTextColor(hdc, textColor.toCOLORREF());
+    ::SetTextColor(hdc, textColor.toCOLORREF());
     DrawTextW(hdc, text.c_str(), (int)text.size(), &r, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
     SelectObject(hdc, old);
 

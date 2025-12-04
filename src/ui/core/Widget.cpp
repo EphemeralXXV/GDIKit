@@ -70,6 +70,43 @@ int Widget::GetLayoutHeight() const {
 }
 
 // --- Mouse event handlers -------------------------------------------
+// Test if cursor currently over widget
+bool Widget::MouseInRect(POINT p) const {
+    RECT clip = AbsRect();
+
+    // Calculate true hit area if clipped by any of the ancestors
+    const Widget* ancestor = parent;
+    while(ancestor) {
+        if(ancestor->clipChildren) {
+            RECT parentRect = ancestor->AbsRect();
+            IntersectRect(&clip, &clip, &parentRect);
+        }
+        ancestor = ancestor->parent;
+    }
+
+    return PtInRect(&clip, p);
+}
+
+void Widget::AddMouseListener(std::function<void(const MouseEvent&)> callback) {
+    mouseListeners.push_back(callback);
+}
+
+void Widget::FeedMouseEvent(const MouseEvent& e) {
+    switch(e.type) {
+        case MouseEventType::Enter:
+        case MouseEventType::Leave:
+        case MouseEventType::Move:  OnMouseMove(e.pos); break;
+        case MouseEventType::Down:  OnMouseDown(e.pos); break;
+        case MouseEventType::Click:
+        case MouseEventType::Up:    OnMouseUp(e.pos);   break;
+    }
+}
+
+void Widget::FireMouseEvent(const MouseEvent& e) {
+    for(auto& listener : mouseListeners)
+        listener(e);
+}
+
 void Widget::OnMouseMove(POINT p) {
     bool wasHovered = hovered; // read old state
     hovered = MouseInRect(p);  // read current state
@@ -98,23 +135,6 @@ void Widget::OnMouseUp(POINT p) {
     }
     pressed = false;
     mouseDownInside = false;
-}
-
-// Test if cursor currently over widget
-bool Widget::MouseInRect(POINT p) const {
-    RECT clip = AbsRect();
-
-    // Calculate true hit area if clipped by any of the ancestors
-    const Widget* ancestor = parent;
-    while(ancestor) {
-        if(ancestor->clipChildren) {
-            RECT parentRect = ancestor->AbsRect();
-            IntersectRect(&clip, &clip, &parentRect);
-        }
-        ancestor = ancestor->parent;
-    }
-
-    return PtInRect(&clip, p);
 }
 
 // --- Rendering ------------------------------------------------------
