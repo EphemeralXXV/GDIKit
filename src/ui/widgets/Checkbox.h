@@ -8,20 +8,43 @@
 
 class Checkbox : public Widget {
     public:
+        // Constructor
         Checkbox(const std::wstring& label = L"");
 
+        // State
+        bool IsChecked() const { return checked; }
+        void SetChecked(bool state) {
+            checked = state;
+            if(onToggle) onToggle(checked);
+        }
+
+        // Appearance
+        std::wstring GetText() const { return text; }
+        void SetText(const std::wstring& newText) { text = newText; }
+
+        Color GetBoxColor()     const { return boxColor; }
+        Color GetCheckColor()   const { return checkColor; }
+        Color GetHoverColor()   const { return hoverColor; }
+        Color GetTextColor()    const { return textColor; }
+        void SetBoxColor(Color newColor)    { boxColor = newColor; }
+        void SetCheckColor(Color newColor)  { checkColor = newColor; }
+        void SetHoverColor(Color newColor)  { hoverColor = newColor; }
+        void SetTextColor(Color newColor)   { textColor = newColor; }
+
+        // Rendering
+        void Render(HDC hdc) override;
+
+        // Behavior
+        void SetOnToggle(std::function<void(bool)> cb);
+
+    private:
         bool checked;
+
         std::wstring text;
-        
         Color boxColor;
         Color checkColor;
         Color hoverColor;
         Color textColor;
-
-        void Render(HDC hdc) override;
-
-        void SetOnToggle(std::function<void(bool)> cb);
-
-    private:
+        
         std::function<void(bool)> onToggle; // Called when checkbox is toggled
 };

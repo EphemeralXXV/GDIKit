@@ -16,7 +16,7 @@ void Label::Render(HDC hdc) {
     RECT r = AbsRect();
 
     SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, textColor.toCOLORREF());
+    ::SetTextColor(hdc, textColor.toCOLORREF());
     HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
     DrawTextW(hdc, text.c_str(), (int)text.size(), &r, DT_SINGLELINE | DT_VCENTER | DT_CENTER);

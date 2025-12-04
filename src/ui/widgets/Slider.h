@@ -1,55 +1,90 @@
 #pragma once
 
 #include <string>
+#include <algorithm>
 #include <functional>
 
 #include "Widget.h"
 #include "Color.h"
 
-// --- Slider ------------------------------------------------------------
 class Slider : public Widget {
-    public:
-        Slider(
-            const std::wstring& label,
-            float minVal,
-            float maxVal,
-            float step,
-            float val
-        );
+public:
+    // Constructor
+    Slider(
+        const std::wstring& label,
+        float minVal,
+        float maxVal,
+        float step,
+        float val
+    );
 
-        float minValue;
-        float maxValue;
-        float step;
-        float value;
+    // Appearance
+    std::wstring GetLabel() const { return label; }
+    void SetLabel(const std::wstring& l) { label = l; }
 
-        std::wstring label;
-        HFONT font;
-        bool showValue;
-        bool showLabel;
+    HFONT GetFont() const { return font; }
+    void SetFont(HFONT newFont) { font = newFont; }
 
-        int handleWidth;
+    float GetValue() const { return value; }
+    void SetValue(float newValue) { 
+        // Don't allow illegal values
+        value = std::clamp(newValue, minValue, maxValue);
+        if(onValueChanged) onValueChanged(value);
+    }
 
-        // Internal offset for drawing text above the track
-        int sliderOffsetY;
+    float GetMinValue() const { return minValue; }
+    void SetMinValue(float newValue) { minValue = newValue; }
 
-        Color trackColor;
-        Color handleColor;
-        Color hoverColor;
-        Color dragColor;
+    float GetMaxValue() const { return maxValue; }
+    void SetMaxValue(float newValue) { maxValue = newValue; }
 
-        bool isDragging;
+    float GetStep() const { return step; }
+    void SetStep(float newStep) {
+        step = std::max(0.0f, newStep);
+    }
 
-        // Compute handle rect in absolute coordinates
-        RECT HandleRect() const;
+    void SetShowValue(bool show) { showValue = show; }
+    void SetShowLabel(bool show) { showLabel = show; }
 
-        void ComputeSliderOffsetY(HDC hdc);
+    void SetHandleWidth(int w) { handleWidth = w; }
 
-        void Render(HDC hdc) override;
+    // Colors
+    Color GetTrackColor()  const { return trackColor; }
+    Color GetHandleColor() const { return handleColor; }
+    Color GetHoverColor()  const { return hoverColor; }
+    Color GetDragColor()   const { return dragColor; }
+    void SetTrackColor(Color newColor)  { trackColor = newColor; }
+    void SetHandleColor(Color newColor) { handleColor = newColor; }
+    void SetHoverColor(Color newColor)  { hoverColor = newColor; }
+    void SetDragColor(Color newColor)   { dragColor = newColor; }
 
-        void UpdateValueFromMouse(int mouseX);
+    // Rendering
+    RECT HandleRect() const;
+    void ComputeSliderOffsetY(HDC hdc);
+    void Render(HDC hdc) override;
 
-        void SetOnValueChanged(std::function<void(float)> cb);
+    // Behavior
+    void UpdateValueFromMouse(int mouseX);
+    void SetOnValueChanged(std::function<void(float)> cb);
 
-    private:
-        std::function<void(float)> onValueChanged;
+private:
+    float minValue;
+    float maxValue;
+    float step;
+    float value;
+
+    int sliderOffsetY;
+    int handleWidth;
+    bool showValue;
+    bool showLabel;
+    bool isDragging;
+
+    std::wstring label;
+    Color trackColor;
+    Color handleColor;
+    Color hoverColor;
+    Color dragColor;
+    HFONT font;
+
+    std::function<void(float)> onValueChanged;
 };

@@ -42,7 +42,7 @@ void Checkbox::Render(HDC hdc) {
 
     // Draw label text
     SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, textColor.toCOLORREF());
+    ::SetTextColor(hdc, textColor.toCOLORREF());
     HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     RECT textRect = { r.left + boxSize + 4, r.top, r.right, r.bottom };
     DrawTextW(hdc, text.c_str(), (int)text.size(), &textRect, DT_SINGLELINE | DT_VCENTER | DT_LEFT);
