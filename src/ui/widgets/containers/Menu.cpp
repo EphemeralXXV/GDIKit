@@ -16,7 +16,7 @@ Menu::Menu(const std::wstring &t) :
     background(Color::FromARGB(180, 0, 0, 0)),
     drawBackground(false)
 {
-    clipChildren = true;
+    SetChildrenClipping(true);
     InitInternalElements();
     AddMouseListener([this](const MouseEvent& e) {
         POINT p = e.pos;
@@ -123,11 +123,11 @@ void Menu::RenderResizeHandle(HDC hdc) const { // Classic triangle-like diagonal
 
 // --- Child management --------------------------------------------------
 void Menu::AddHeaderChild(const WidgetPtr &child) {
-    child->parent = this;
+    child->SetParent(this);
     headerChildren.push_back(child);
 }
 void Menu::AddBodyChild(const WidgetPtr &child) {
-    child->parent = this;
+    child->SetParent(this);
     bodyChildren.push_back(child);
 }
 void Menu::RemoveAll() {
@@ -232,12 +232,12 @@ void Menu::Render(HDC hdc) {
     }
 
     for(auto &c : headerChildren) {
-        if(c->visible) c->Render(hdc);
+        if(c->IsVisible()) c->Render(hdc);
     }
     if(!isCollapsed) {
         // Render children in order (if menu is expanded)
         for(auto &c : bodyChildren) {
-            if(c->visible) c->Render(hdc);
+            if(c->IsVisible()) c->Render(hdc);
         }
         // Draw resize handle
         RenderResizeHandle(hdc);

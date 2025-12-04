@@ -17,30 +17,32 @@ class Widget {
         Widget();
         virtual ~Widget() {};
 
-        // Pointer to parent widget (container)
-        Widget* parent;
+        Widget* GetParent() const { return parent; }
+        void SetParent(Widget* newParent) { parent = newParent; }
 
-        // Bounding rectangle relative to parent
-        RECT rect;
+        // Visual state
+        bool IsVisible() const { return visible; }
+        void SetVisible(bool visible) { visible = visible; }
 
-        // Convenient expressions of rect geometry
-        int x, y;                               // Origin (top-left) relative to parent
-        int width, height;                      // Internal widget size
-        int preferredWidth, preferredHeight;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
+        bool IsEnabled() const { return enabled; }
+        void SetEnabled(bool enabled) { enabled = enabled; }
 
-        // Widget states
-        bool visible;
-        bool enabled;
-        bool hovered;
-        bool pressed;
-        bool mouseDownInside; // tracks if mouse click began within widget
-
-        bool clipChildren;
-
-        // Mouse listeners
-        std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
+        bool IsClippingChildren() const { return clipChildren; }
+        void SetChildrenClipping(bool clipChildren) { clipChildren = clipChildren; }
 
         // --- Geometry -----------------------------------------------------
+        // Relative geometry read access
+        int GetX() const { return x; }
+        int GetY() const { return y; }
+
+        int GetWidth() const { return width; }
+        int GetHeight() const { return height; }
+
+        int GetPreferredWidth() const { return preferredWidth; }
+        int GetPreferredHeight() const { return preferredHeight; }
+
+        RECT GetRect() const { return rect; }
+
         // Absolute coordinate getters (relative => absolute)
         int AbsX() const;
         int AbsY() const;
@@ -48,18 +50,17 @@ class Widget {
         int AbsBottom() const;
         RECT AbsRect() const;
 
+        // Get final internal geometry computed from preferred size
+        int GetLayoutWidth() const;
+        int GetLayoutHeight() const;
+
         // Size setters
         void SetRect(int l, int t, int r, int b);       // Sets the relative rect
         void SetPosSize(int x, int y, int w, int h);    // Sets the absolute position
         void SetPreferredSize(int w, int h);
 
-        // Helper functions reacting to geometry changes
-        void UpdateConvenienceGeometry();               // Updates convenience geometry vars on internal geometry changes
-        virtual void UpdateInternalLayout();            // Updates automatic layouts on geometry changes
-
-        // Get final internal geometry computed from preferred size
-        int GetLayoutWidth() const;
-        int GetLayoutHeight() const;
+        // Updates automatic layouts on geometry changes
+        virtual void UpdateInternalLayout(); // INTERNAL USE ONLY!
         
         // Test if cursor currently over widget
         bool MouseInRect(POINT p) const;
@@ -85,7 +86,32 @@ class Widget {
         virtual void Render(HDC hdc);
 
     protected:
-        // --- Mouse event handlers -----------------------------------------
+        // Pointer to parent widget (container)
+        Widget* parent;
+
+        // Bounding rectangle relative to parent
+        RECT rect;
+
+        // Convenient expressions of rect geometry
+        int x, y;                               // Origin (top-left) relative to parent
+        int width, height;                      // Internal widget size
+        int preferredWidth, preferredHeight;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
+
+        // Widget states
+        bool visible;
+        bool enabled;
+        bool clipChildren;
+        bool hovered;
+        bool pressed;
+        bool mouseDownInside; // tracks if mouse click began within widget
+
+        // --- Geometry -----------------------------------------------------
+        // Helper functions reacting to geometry changes
+        void UpdateConvenienceGeometry();               // Updates convenience geometry vars on internal geometry changes
+
+        // --- Mouse events  ------------------------------------------------
+        std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
+
         void FireMouseEvent(const MouseEvent& e) {
             for(auto& listener : mouseListeners)
                 listener(e);

@@ -13,7 +13,6 @@ Checkbox::Checkbox(const std::wstring& label) :
 {
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
-            OutputDebugStringA(MouseInRect(e.pos) ? "!!!MOUSEINRECT TRUE!!!\n" : "!!!MOUSEINRECT FALSE!!!\n");
             checked = !checked;
             if(onToggle) onToggle(checked); // Fire user-provided callback
         }
