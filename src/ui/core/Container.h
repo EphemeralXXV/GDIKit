@@ -8,10 +8,10 @@
 #include "Color.h"
 #include "Border.h"
 
-using WidgetPtr = std::shared_ptr<Widget>;
-
 class Container : public Widget {
 public:
+    using WidgetPtr = std::shared_ptr<Widget>;
+    
     // Constructor
     Container();
 
@@ -28,7 +28,7 @@ public:
 
     // Appearance
     void SetBackgroundColor(const Color& newColor) { backgroundColor = newColor; }
-    Color GetBackgroundColor() { return backgroundColor; }
+    Color GetBackgroundColor() const { return backgroundColor; }
 
     void SetBorder(const Color& color, int thickness = 1, BorderSide sides = BorderSide::All);
     Border GetBorder() const { return border; }

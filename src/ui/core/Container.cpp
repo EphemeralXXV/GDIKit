@@ -17,8 +17,15 @@ void Container::AddChild(const WidgetPtr& child) {
 
 void Container::RemoveChild(const WidgetPtr& child) {
     if(!child) return;
-    child->SetParent(nullptr);
-    children.erase(std::remove(children.begin(), children.end(), child), children.end());
+
+    auto it = std::remove(children.begin(), children.end(), child);
+
+    // Only remove the widget if it's actually a child
+    if(it != children.end()) {
+        child->SetParent(nullptr);
+        children.erase(it, children.end());
+    }
+    
     UpdateInternalLayout();
 }
 
@@ -31,6 +38,7 @@ void Container::RemoveAllChildren() {
 }
 
 void Container::SetLayout(std::unique_ptr<Layout> newLayout) {
+    if(!newLayout) return;
     layout = std::move(newLayout);
     layout->SetContainer(this);
     UpdateInternalLayout();
@@ -74,14 +82,22 @@ void Container::Render(HDC hdc) {
         HPEN oldPen = (HPEN)SelectObject(hdc, pen);
         RECT r = AbsRect();
 
-        if(HasSide(border.sides, BorderSide::Top))
-            MoveToEx(hdc, r.left, r.top, nullptr), LineTo(hdc, r.right, r.top);
-        if(HasSide(border.sides, BorderSide::Bottom))
-            MoveToEx(hdc, r.left, r.bottom - border.thickness, nullptr), LineTo(hdc, r.right, r.bottom - border.thickness);
-        if(HasSide(border.sides, BorderSide::Left))
-            MoveToEx(hdc, r.left, r.top, nullptr), LineTo(hdc, r.left, r.bottom);
-        if(HasSide(border.sides, BorderSide::Right))
-            MoveToEx(hdc, r.right - border.thickness, r.top, nullptr), LineTo(hdc, r.right - border.thickness, r.bottom);
+        if(HasSide(border.sides, BorderSide::Top)) {
+            MoveToEx(hdc, r.left, r.top, nullptr);
+            LineTo(hdc, r.right, r.top);
+        }
+        if(HasSide(border.sides, BorderSide::Bottom)) {
+            MoveToEx(hdc, r.left, r.bottom - border.thickness, nullptr);
+            LineTo(hdc, r.right, r.bottom - border.thickness);
+        }
+        if(HasSide(border.sides, BorderSide::Left)) {
+            MoveToEx(hdc, r.left, r.top, nullptr);
+            LineTo(hdc, r.left, r.bottom);
+        }
+        if(HasSide(border.sides, BorderSide::Right)) {
+            MoveToEx(hdc, r.right - border.thickness, r.top, nullptr);
+            LineTo(hdc, r.right - border.thickness, r.bottom);
+        }
 
         SelectObject(hdc, oldPen);
         DeleteObject(pen);

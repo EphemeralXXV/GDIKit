@@ -5,10 +5,11 @@
 #include <windows.h>
 
 enum class MouseEventType { Enter, Leave, Move, Down, Up, Click };
+enum class MouseButton { None = 0, Left = 1, Right = 2 };
 struct MouseEvent {
     MouseEventType type;
     POINT pos;  // relative to widget
-    int button; // left=1, right=2
+    MouseButton button;
 };
 
 class Widget {
@@ -71,7 +72,6 @@ class Widget {
         void AddMouseListener(std::function<void(const MouseEvent&)> callback);
 
         // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
-        // Should probably use a friend class in the future?
         // EXTREMELY IMPORTANT: make it virtual so containers can override (and e.g. propagate to children)
         virtual void FeedMouseEvent(const MouseEvent& e);
 

@@ -26,7 +26,9 @@ int Widget::AbsBottom() const {
     return AbsY() + height;
 }
 RECT Widget::AbsRect() const {
-    return RECT{ AbsX(), AbsY(), AbsX() + width, AbsY() + height};
+    int absX = AbsX();
+    int absY = AbsY();
+    return RECT{ absX, absY, absX + width, absY + height};
 }
 
 // Size setters
@@ -122,26 +124,26 @@ void Widget::OnMouseMove(POINT p) {
     bool wasHovered = hovered; // read old state
     hovered = MouseInRect(p);  // read current state
 
-    if(hovered && !wasHovered) FireMouseEvent({MouseEventType::Enter, p, 1});
-    if(!hovered && wasHovered) FireMouseEvent({MouseEventType::Leave, p, 1});
+    if(hovered && !wasHovered) FireMouseEvent({MouseEventType::Enter, p, MouseButton::Left});
+    if(!hovered && wasHovered) FireMouseEvent({MouseEventType::Leave, p, MouseButton::Left});
     // Fire Move also if pressed - in case of dragging, for example
-    if(hovered || pressed) FireMouseEvent({MouseEventType::Move, p, 1});
+    if(hovered || pressed) FireMouseEvent({MouseEventType::Move, p, MouseButton::Left});
 }
 void Widget::OnMouseDown(POINT p) {
     if(!enabled) return;
     if(MouseInRect(p)) {
         pressed = true;
         mouseDownInside = true; // track click start
-        FireMouseEvent({MouseEventType::Down, p, 1});
+        FireMouseEvent({MouseEventType::Down, p, MouseButton::Left});
     }
 }
 void Widget::OnMouseUp(POINT p) {
     if(!enabled) return;
     if(pressed) {
         // Let MouseUp happen outside widget, e.g. to cancel selection
-        FireMouseEvent({MouseEventType::Up, p, 1});
+        FireMouseEvent({MouseEventType::Up, p, MouseButton::Left});
         if(mouseDownInside && MouseInRect(p)) {
-            FireMouseEvent({MouseEventType::Click, p, 1});
+            FireMouseEvent({MouseEventType::Click, p, MouseButton::Left});
         }
     }
     pressed = false;

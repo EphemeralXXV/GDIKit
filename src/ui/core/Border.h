@@ -1,4 +1,6 @@
-#include <stdint.h>
+#pragma once
+
+#include <cstdint>
 
 #include "Color.h"
 
@@ -22,6 +24,6 @@ inline bool HasSide(BorderSide sides, BorderSide side) {
 
 struct Border {
     int thickness = 0;
-    Color color = Color::FromARGB(0,0,0,0);;
+    Color color = Color::FromARGB(0,0,0,0);
     BorderSide sides = BorderSide::All;
 };
