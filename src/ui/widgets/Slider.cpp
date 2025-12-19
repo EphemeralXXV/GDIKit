@@ -27,6 +27,7 @@ Slider::Slider(
     handleColor(Color::FromRGB(180, 180, 180)),
     hoverColor(Color::FromRGB(220, 220, 220)),
     dragColor(Color::FromRGB(150, 150, 255)),
+    labelColor(Color::FromRGB(255, 255, 255)),
     isDragging(false)
 {
     AddMouseListener([this](const MouseEvent& e) {
@@ -92,7 +93,7 @@ void Slider::Render(HDC hdc) {
     // Adjust height to label offset
     int correctedHeight = sliderOffsetY + preferredHeight;
     if(height != correctedHeight)
-        SetPosSize(x, y, width, correctedHeight);
+        SetSize(width, correctedHeight);
 
     // Track
     RECT track = {
@@ -128,6 +129,8 @@ void Slider::Render(HDC hdc) {
     RECT textRect = { AbsX(), AbsY(), AbsX() + width, AbsY() + sliderOffsetY};
 
     // Left-aligned label
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, labelColor.toCOLORREF());
     DrawTextW(hdc, label.c_str(), -1, &textRect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
     // Right-aligned numeric value

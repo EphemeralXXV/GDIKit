@@ -4,67 +4,74 @@
 #include <memory>
 
 #include "Widget.h"
+#include "Container.h"
 #include "Button.h"
+#include "Label.h"
 #include "Color.h"
-#include "LayoutContext.h"
 
 using WidgetPtr = std::shared_ptr<Widget>;
+using ContainerPtr = std::shared_ptr<Container>;
 using ButtonPtr = std::shared_ptr<Button>;
+using LabelPtr = std::shared_ptr<Label>;
 
-class Menu : public Widget {
+class Menu : public Container {
     public:
         // Constructor
         Menu(const std::wstring &t = L"Menu");
 
         // Appearance
         bool IsCollapsed() const { return isCollapsed; }
-        void SetCollapsed(bool collapsed) { isCollapsed = collapsed; }
+        void SetCollapsed(bool collapsed);
 
-        void SetTitle(const std::wstring &t) { title = t; }
-        void SetShowTitleBar(bool show) { showTitleBar = show; }
+        // Override defaults to update layout
+        void OnInternalLayoutUpdated() override;
+        void SetSize(int w, int h);
+        void SetPosSize(int x, int y, int w, int h);
 
-        void SetBackgroundColor(const Color &color) { backgroundColor = color; }
-        void SetDrawBackground(bool draw) { drawBackground = draw; }
+        void SetTitle(const std::wstring &t);
+        std::wstring GetTitle() const { return title; }
+        void SetShowTitleBar(bool show);
 
-        // --- Child management --------------------------------------------------        
-        void AddHeaderChild(const WidgetPtr &child);
-        void AddBodyChild(const WidgetPtr &child);
-        void RemoveAll();
+        void SetBodyLayout(std::unique_ptr<Layout> newLayout) {
+            // Delegate to body, which is the only mutable part of the menu (for now)
+            if(!bodyContainer) return;
+            bodyContainer->SetLayout(std::move(newLayout));
+        }
+        void SetBodyBackgroundColor(const Color &color) {
+            // Delegate to body, which is the only mutable part of the menu (for now)
+            if(!bodyContainer) return;
+            bodyContainer->SetBackgroundColor(color);
+        }
 
-        // --- Layout - should move to generic container struct once it exists ---
-        void BeginLayout(int startX, int startY);
-        void EndLayout();
-
-        // Place child widget in vertical layout
-        void ApplyLayout(Widget* w);
-
-        // AddChild wrapper for containers with layout -- SoC preservation just in case
-        void AddChildWithLayout(const WidgetPtr& child);
+        // --- Child management --------------------------------------------------
+        void AddBodyChild(const WidgetPtr& child) {
+            // Delegate to body, which is the only mutable part of the menu (for now)
+            bodyContainer->AddChild(child);
+        }
+        void RemoveAllChildren() {
+            bodyContainer->RemoveAllChildren();  // only clear body children
+        }
 
         // --- Rendering ---------------------------------------------------------
         void Render(HDC hdc) override;
 
-    protected:
-        // Update children geometry dynamically
-        void UpdateInternalLayout() override;
-
     private:
-        LayoutContext currentLayout;
-
         // Resize handle in the bottom-right of the menu
         RECT ResizeHandleRect() const;
         void RenderResizeHandle(HDC hdc) const;
 
-        // Children
-        std::vector<WidgetPtr> headerChildren;  // Title bar elements
-        std::vector<WidgetPtr> bodyChildren;    // Main content
-
-        WidgetPtr titleBar;
+        // Header (title bar)
+        ContainerPtr headerContainer;
+        LabelPtr titleLabel;
         ButtonPtr closeButton;
         ButtonPtr collapseButton;
-        
-        // Create children immediately
-        void InitInternalElements();
+
+        // Body (main content)
+        ContainerPtr bodyContainer;
+
+        // Sub-container initialization
+        void InitHeader();
+        void InitBody();
 
         // Window state
         bool isCollapsed;
@@ -76,10 +83,5 @@ class Menu : public Widget {
 
         // Title bar
         std::wstring title;
-        bool showTitleBar;
         int titleBarHeight;
-
-        // Appearance
-        Color backgroundColor;
-        bool drawBackground;
 };

@@ -49,14 +49,16 @@ public:
     void SetHandleWidth(int w) { handleWidth = w; }
 
     // Colors
-    Color GetTrackColor()  const { return trackColor; }
-    Color GetHandleColor() const { return handleColor; }
-    Color GetHoverColor()  const { return hoverColor; }
-    Color GetDragColor()   const { return dragColor; }
+    Color GetTrackColor()   const { return trackColor; }
+    Color GetHandleColor()  const { return handleColor; }
+    Color GetHoverColor()   const { return hoverColor; }
+    Color GetDragColor()    const { return dragColor; }
+    Color GetLabelColor()   const { return labelColor; }
     void SetTrackColor(Color newColor)  { trackColor = newColor; }
     void SetHandleColor(Color newColor) { handleColor = newColor; }
     void SetHoverColor(Color newColor)  { hoverColor = newColor; }
     void SetDragColor(Color newColor)   { dragColor = newColor; }
+    void SetLabelColor(Color newColor)  { labelColor = newColor; }
 
     // Rendering
     RECT HandleRect() const;
@@ -84,6 +86,7 @@ private:
     Color handleColor;
     Color hoverColor;
     Color dragColor;
+    Color labelColor;
     HFONT font;
 
     std::function<void(float)> onValueChanged;

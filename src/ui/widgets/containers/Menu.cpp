@@ -1,7 +1,5 @@
 #include "Menu.h"
-#include "Button.h"
-
-using WidgetPtr = std::shared_ptr<Widget>;
+#include "VerticalLayout.h"
 
 Menu::Menu(const std::wstring &t) :
     isCollapsed(false),
@@ -11,28 +9,25 @@ Menu::Menu(const std::wstring &t) :
     resizeOffset({0, 0}),
     resizeHandleSize(10), // 10x10 px square in the bottom-right corner
     title(t),
-    showTitleBar(true),
-    titleBarHeight(22),
-    backgroundColor(Color::FromARGB(180, 0, 0, 0)),
-    drawBackground(false)
+    titleBarHeight(22)
 {
     SetChildrenClipping(true);
-    InitInternalElements();
+    SetBackgroundColor(Color::FromARGB(180, 0, 0, 0));
+    InitHeader();
+    InitBody();
+    SetLayout(std::make_unique<VerticalLayout>());
     AddMouseListener([this](const MouseEvent& e) {
         POINT p = e.pos;
 
         switch(e.type) {
             case MouseEventType::Move:
                 if(isDragging) {
-                    SetPosSize(p.x - dragOffset.x, p.y - dragOffset.y, width, height);
+                    SetPos(p.x - dragOffset.x, p.y - dragOffset.y);
                 }
                 if(isResizing) {
                     int newWidth = p.x - AbsX() + resizeOffset.x;
                     int newHeight = p.y - AbsY() + resizeOffset.y;
-                    int newW = std::max(newWidth, 50);
-                    int newH = std::max(newHeight, 50);
-                    SetPosSize(x, y, newW, newH);
-                    UpdateInternalLayout();
+                    SetSize(newWidth, newHeight);
                 }
                 break;
 
@@ -46,7 +41,7 @@ Menu::Menu(const std::wstring &t) :
                     return;
                 }
                 // Title bar drag -- navigation buttons take precedence!
-                if(titleBar->MouseInRect(p) &&
+                if(headerContainer->MouseInRect(p) &&
                     !collapseButton->MouseInRect(p) &&
                     !closeButton->MouseInRect(p)
                 ) {
@@ -62,19 +57,6 @@ Menu::Menu(const std::wstring &t) :
                 isDragging = false;
                 isResizing = false;
                 break;
-        }
-        
-        // Header children always get events
-        for(auto it = headerChildren.rbegin(); it != headerChildren.rend(); ++it) {
-            // Feed the mouse event directly to children
-            (*it)->FeedMouseEvent(e);
-        }
-        
-        if(!isCollapsed) {
-            for(auto it = bodyChildren.rbegin(); it != bodyChildren.rend(); ++it) {
-                // Feed the mouse event directly to children
-                (*it)->FeedMouseEvent(e);
-            }
         }
     });
 }
@@ -121,109 +103,94 @@ void Menu::RenderResizeHandle(HDC hdc) const { // Classic triangle-like diagonal
     DeleteObject(pen);
 }
 
-// --- Child management --------------------------------------------------
-void Menu::AddHeaderChild(const WidgetPtr &child) {
-    child->SetParent(this);
-    headerChildren.push_back(child);
-}
-void Menu::AddBodyChild(const WidgetPtr &child) {
-    child->SetParent(this);
-    bodyChildren.push_back(child);
-}
-void Menu::RemoveAll() {
-    headerChildren.clear();
-    bodyChildren.clear();
-}
+// --- Subcontainer initialization --------------------------------------------------
+void Menu::InitHeader() {
+    headerContainer = std::make_shared<Container>();
+    headerContainer->SetBackgroundColor(Color::FromRGB(60, 60, 60));
+    headerContainer->SetBorder(Color::FromRGB(20, 20, 20), 1, BorderSide::Bottom);
 
-// Create children immediately
-void Menu::InitInternalElements() {
-    titleBar = std::make_shared<Widget>();
-    AddHeaderChild(titleBar);
+    titleLabel = std::make_shared<Label>(title);
+    titleLabel->SetTextColor(Color::FromRGB(220, 220, 220));
 
     closeButton = std::make_shared<Button>(L"×");
     closeButton->SetOnClick([&](){
         SetVisible(false);
     });
-    AddHeaderChild(closeButton);
 
     collapseButton = std::make_shared<Button>(L"▾");
     collapseButton->SetOnClick([&](){
-        isCollapsed = !isCollapsed;
+        SetCollapsed(!isCollapsed);
         collapseButton->SetText(isCollapsed ? L"▸" : L"▾");
     });
-    AddHeaderChild(collapseButton);
+
+    headerContainer->AddChild(titleLabel);
+    headerContainer->AddChild(collapseButton);
+    headerContainer->AddChild(closeButton);
+
+    AddChild(headerContainer);
 }
-
-// Update children geometry dynamically
-void Menu::UpdateInternalLayout() {
-    titleBar->SetPosSize(0, 0, width, titleBarHeight);
-    closeButton->SetPosSize(width - 20, 2, 18, 18);
-    collapseButton->SetPosSize(width - 40, 2, 18, 18);
-
-    // Propagate to child widgets if needed
-    for(auto& c : bodyChildren)
-        c->UpdateInternalLayout();
-}
-
-// --- Layout - should move to generic container struct once it exists ---
-void Menu::BeginLayout(int startX, int startY) {
-    currentLayout.cursorX = startX;
-    currentLayout.cursorY = startY + titleBarHeight; // Start in the proper menu area, under the title bar
-}
-
-void Menu::EndLayout() {
-    // nothing for now; placeholder if we want groups later
-}
-
-// Place child widget in vertical layout
-void Menu::ApplyLayout(Widget* w) {
-    int lWidth = w->GetLayoutWidth();
-    int lHeight = w->GetLayoutHeight();
-    w->SetPosSize(currentLayout.cursorX, currentLayout.cursorY, lWidth, lHeight);
-    currentLayout.cursorY += lHeight + currentLayout.spacingY;
-}
-
-// AddBodyChild wrapper for containers with layout -- SoC preservation just in case
-void Menu::AddChildWithLayout(const WidgetPtr& child) {
-    AddBodyChild(child);
-    ApplyLayout(child.get());
+void Menu::InitBody() {
+    bodyContainer = std::make_shared<Container>();
+    AddChild(bodyContainer);
 }
 
 // --- Rendering ---------------------------------------------------------
+void Menu::OnInternalLayoutUpdated() {
+    // Recalculates layout on every header/body change
+    // Geometry is only set here (and not during initialization), because it's a dynamic thing
+    if(headerContainer) {
+        headerContainer->SetSize(width, titleBarHeight);
+        titleLabel->SetPos(6, 4);
+        closeButton->SetPosSize(width - 20, 2, 18, 18);
+        collapseButton->SetPosSize(width - 40, 2, 18, 18);
+    }
+    if(bodyContainer) {
+        bodyContainer->SetSize(width, height - titleBarHeight);
+    }
+}
+
+void Menu::SetSize(int w, int h) {
+    // Clamp width to 50 and height to title bar height (title bar always visible)
+    Container::SetSize(std::max(w, 50), std::max(h, titleBarHeight));
+}
+
+void Menu::SetPosSize(int x, int y, int w, int h) {
+    Container::SetPosSize(std::max(x, 50), y, w, std::max(h, titleBarHeight));
+}
+
+void Menu::SetCollapsed(bool collapsed) {
+    isCollapsed = collapsed;
+    bodyContainer->SetVisible(!collapsed);
+    // shrink height to header only
+    if(collapsed) {
+        // Cache expanded size
+        SetPreferredSize(width, height);
+        SetSize(width, titleBarHeight);
+    }
+    else {
+        SetSize(width, preferredHeight);
+    }
+}
+void Menu::SetTitle(const std::wstring &newTitle) {
+    title = newTitle;
+    titleLabel->SetText(newTitle);
+}
+void Menu::SetShowTitleBar(bool show) { 
+    headerContainer->SetVisible(show);
+    // shrink height to content only
+    if(show) {
+        SetSize(width, preferredHeight);
+    }
+    else {
+        SetSize(width, preferredHeight - titleBarHeight);
+    }
+}
+
 void Menu::Render(HDC hdc) {
     if(!visible)
         return;
     
     int saved = SaveDC(hdc);
-
-    // --- Title bar ---
-    if(showTitleBar) {
-        HBRUSH barBrush = CreateSolidBrush(RGB(60, 60, 60));
-        RECT titleBarRect = titleBar->AbsRect();
-        FillRect(hdc, &titleBarRect, barBrush);
-        DeleteObject(barBrush);
-
-        // Bar border line
-        HPEN pen = CreatePen(PS_SOLID, 1, RGB(20,20,20));
-        HGDIOBJ oldPen = SelectObject(hdc, pen);
-        MoveToEx(hdc, AbsX(), AbsY() + titleBarHeight, NULL);
-        LineTo(hdc, AbsX() + width, AbsY() + titleBarHeight);
-        SelectObject(hdc, oldPen);
-        DeleteObject(pen);
-
-        // Title text
-        SetBkMode(hdc, TRANSPARENT);
-        SetTextColor(hdc, RGB(220,220,220));
-        TextOutW(hdc, titleBar->AbsX() + 6, titleBar->AbsY() + 4, title.c_str(), (int)title.size());
-    }
-
-    // --- Draw menu background if expanded ---
-    if(drawBackground && !isCollapsed) {
-        HBRUSH br = CreateSolidBrush(backgroundColor.toCOLORREF());
-        RECT bg{ AbsX(), AbsY() + titleBarHeight, AbsX() + width, AbsY() + height };
-        FillRect(hdc, &bg, br);
-        DeleteObject(br);
-    }
 
     // Clip children to menu bounds if overflow is hidden
     if(clipChildren) {
@@ -231,14 +198,10 @@ void Menu::Render(HDC hdc) {
         IntersectClipRect(hdc, absRect.left, absRect.top, absRect.right, absRect.bottom);
     }
 
-    for(auto &c : headerChildren) {
-        if(c->IsVisible()) c->Render(hdc);
-    }
+    // Render children in order
+    Container::Render(hdc);
+
     if(!isCollapsed) {
-        // Render children in order (if menu is expanded)
-        for(auto &c : bodyChildren) {
-            if(c->IsVisible()) c->Render(hdc);
-        }
         // Draw resize handle
         RenderResizeHandle(hdc);
     }

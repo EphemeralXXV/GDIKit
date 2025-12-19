@@ -28,7 +28,7 @@ class Widget {
         void SetEnabled(bool enabled) { this->enabled = enabled; }
 
         bool IsClippingChildren() const { return clipChildren; }
-        void SetChildrenClipping(bool clipChildren) { clipChildren = clipChildren; }
+        void SetChildrenClipping(bool clipChildren) { this->clipChildren = clipChildren; }
 
         // --- Geometry -----------------------------------------------------
         // Relative geometry read access
@@ -56,11 +56,14 @@ class Widget {
 
         // Size setters
         void SetRect(int l, int t, int r, int b);       // Sets the relative rect
-        void SetPosSize(int x, int y, int w, int h);    // Sets the absolute position
+        void SetPos(int x, int y);                      // Sets the absolute position
+        void SetSize(int w, int h);                     // Sets the size
+        void SetPosSize(int x, int y, int w, int h);    // Sets the absolute position and size
         void SetPreferredSize(int w, int h);
 
         // Updates automatic layouts on geometry changes
         virtual void UpdateInternalLayout(); // INTERNAL USE ONLY!
+        virtual void OnInternalLayoutUpdated(); // optional callback
         
         // Test if cursor currently over widget
         bool MouseInRect(POINT p) const;
@@ -69,7 +72,8 @@ class Widget {
 
         // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
         // Should probably use a friend class in the future?
-        void FeedMouseEvent(const MouseEvent& e);
+        // EXTREMELY IMPORTANT: make it virtual so containers can override (and e.g. propagate to children)
+        virtual void FeedMouseEvent(const MouseEvent& e);
 
         // --- Rendering ---
         virtual void Render(HDC hdc);

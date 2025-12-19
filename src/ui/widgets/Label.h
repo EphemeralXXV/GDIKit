@@ -21,6 +21,7 @@ class Label : public Widget {
         void SetTextColor(Color newColor) { textColor = newColor; }
 
         // Rendering
+        void ComputeRect(HDC hdc);
         void Render(HDC hdc) override;
 
     private:

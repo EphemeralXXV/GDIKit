@@ -36,9 +36,19 @@ void Widget::SetRect(int l, int t, int r, int b) {
     UpdateConvenienceGeometry();
     UpdateInternalLayout();
 }
-void Widget::SetPosSize(int x, int y, int w, int h) {
-    // Sets the absolute position
+void Widget::SetPos(int x, int y) {
+    int w = rect.right - rect.left;
+    int h = rect.bottom - rect.top;
     rect = {x, y, x + w, y + h};
+    UpdateConvenienceGeometry();
+}
+void Widget::SetSize(int w, int h) {
+    rect = {rect.left, rect.top, rect.left + w, rect.top + h};
+    UpdateConvenienceGeometry();
+    UpdateInternalLayout();
+}
+void Widget::SetPosSize(int x, int y, int w, int h) {
+    rect = { x, y, x + w, y + h };
     UpdateConvenienceGeometry();
     UpdateInternalLayout();
 }
@@ -60,6 +70,7 @@ void Widget::UpdateInternalLayout() {
     // Updates automatic layouts on geometry changes
     // default: no-op. Derived widgets may override to update children elements.
 }
+void Widget::OnInternalLayoutUpdated() {}
 
 // Get final internal geometry computed from preferred size
 int Widget::GetLayoutWidth() const {
