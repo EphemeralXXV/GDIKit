@@ -8,7 +8,7 @@
 class Label : public Widget {
     public:
         // Constructor
-        Label(const std::wstring &t = L"");
+        Label(std::wstring t = L"");
 
         // Appearance
         std::wstring GetText() const { return text; }

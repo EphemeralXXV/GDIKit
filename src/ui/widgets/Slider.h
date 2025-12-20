@@ -11,7 +11,7 @@ class Slider : public Widget {
 public:
     // Constructor
     Slider(
-        const std::wstring& label,
+        std::wstring label,
         float minVal,
         float maxVal,
         float step,
@@ -20,7 +20,7 @@ public:
 
     // Appearance
     std::wstring GetLabel() const { return label; }
-    void SetLabel(const std::wstring& l) { label = l; }
+    void SetLabel(std::wstring l) { label = l; }
 
     HFONT GetFont() const { return font; }
     void SetFont(HFONT newFont) { font = newFont; }
@@ -80,6 +80,7 @@ private:
     bool showValue;
     bool showLabel;
     bool isDragging;
+    bool handleHovered;
 
     std::wstring label;
     Color trackColor;

@@ -9,7 +9,7 @@
 class Button : public Widget {
     public:
         // Constructor
-        Button(const std::wstring &t = L"Button");
+        Button(std::wstring t = L"Button");
 
         // Appearance
         std::wstring GetText() const { return text; }

@@ -26,7 +26,11 @@ Menu::Menu(const std::wstring &t) :
                 }
                 if(isResizing) {
                     int newWidth = p.x - AbsX() + resizeOffset.x;
+                    if(newWidth < 0) break; // Negative size is invalid; don't bother continuing
+
                     int newHeight = p.y - AbsY() + resizeOffset.y;
+                    if(newHeight < 0) break;
+
                     SetSize(newWidth, newHeight);
                 }
                 break;
@@ -155,7 +159,7 @@ void Menu::SetSize(int w, int h) {
 }
 
 void Menu::SetPosSize(int x, int y, int w, int h) {
-    Container::SetPosSize(std::max(x, 50), y, w, std::max(h, titleBarHeight));
+    Container::SetPosSize(x, y, std::max(w, 50), std::max(h, titleBarHeight));
 }
 
 void Menu::SetCollapsed(bool collapsed) {

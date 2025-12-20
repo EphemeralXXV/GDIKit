@@ -7,7 +7,7 @@
 
 // --- Slider ------------------------------------------------------------
 Slider::Slider(
-    const std::wstring& label,
+    std::wstring label,
     float minVal = 0.0f,
     float maxVal = 1.0f,
     float step = 0.0f,      // 0 means free movement
@@ -28,7 +28,8 @@ Slider::Slider(
     hoverColor(Color::FromRGB(220, 220, 220)),
     dragColor(Color::FromRGB(150, 150, 255)),
     labelColor(Color::FromRGB(255, 255, 255)),
-    isDragging(false)
+    isDragging(false),
+    handleHovered(false)
 {
     AddMouseListener([this](const MouseEvent& e) {
         switch(e.type) {
@@ -47,10 +48,18 @@ Slider::Slider(
                 break;
             }
 
-            case MouseEventType::Move:
+            case MouseEventType::Move: {
+                RECT hr = HandleRect();
+                handleHovered = PtInRect(&hr, e.pos);
+
                 if(isDragging) {
                     UpdateValueFromMouse(e.pos.x);
                 }
+                break;
+            }
+
+            case MouseEventType::Leave:
+                handleHovered = false;
                 break;
 
             case MouseEventType::Up:
@@ -111,11 +120,8 @@ void Slider::Render(HDC hdc) {
     Color handleCol = handleColor;
 
     // Determine handle color based on state
-    POINT p;
-    GetCursorPos(&p);
-    if(PtInRect(&hr, p)) { // Handle hovered
-        if(parent && parent->MouseInRect(p)) // Only if slider doesn't overflow its container
-            handleCol = hoverColor;
+    if(handleHovered) {
+        handleCol = hoverColor;
     }
     if(isDragging) { // Dragging takes precendence over hovering
         handleCol = dragColor;

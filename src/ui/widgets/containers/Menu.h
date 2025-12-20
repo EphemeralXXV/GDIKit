@@ -9,13 +9,13 @@
 #include "Label.h"
 #include "Color.h"
 
-using WidgetPtr = std::shared_ptr<Widget>;
-using ContainerPtr = std::shared_ptr<Container>;
-using ButtonPtr = std::shared_ptr<Button>;
-using LabelPtr = std::shared_ptr<Label>;
-
 class Menu : public Container {
     public:
+        using WidgetPtr = std::shared_ptr<Widget>;
+        using ContainerPtr = std::shared_ptr<Container>;
+        using ButtonPtr = std::shared_ptr<Button>;
+        using LabelPtr = std::shared_ptr<Label>;
+        
         // Constructor
         Menu(const std::wstring &t = L"Menu");
 
@@ -48,7 +48,7 @@ class Menu : public Container {
             // Delegate to body, which is the only mutable part of the menu (for now)
             bodyContainer->AddChild(child);
         }
-        void RemoveAllChildren() {
+        void RemoveAllBodyChildren() {
             bodyContainer->RemoveAllChildren();  // only clear body children
         }
 

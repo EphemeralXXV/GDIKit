@@ -4,7 +4,7 @@
 #include "Color.h"
 #include "Button.h"
 
-Button::Button(const std::wstring &t) :
+Button::Button(std::wstring t) :
     text(t),
     font(nullptr),
     backColor(Color::FromARGB(200,30,30,30)),

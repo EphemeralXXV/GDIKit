@@ -9,18 +9,22 @@
 class Checkbox : public Widget {
     public:
         // Constructor
-        Checkbox(const std::wstring& label = L"");
+        Checkbox(std::wstring label = L"");
 
         // State
         bool IsChecked() const { return checked; }
         void SetChecked(bool state) {
+            if(state == checked) return;
             checked = state;
             if(onToggle) onToggle(checked);
         }
 
         // Appearance
         std::wstring GetText() const { return text; }
-        void SetText(const std::wstring& newText) { text = newText; }
+        void SetText(std::wstring newText) { text = newText; }
+
+        HFONT GetFont() const { return font; }
+        void SetFont(HFONT newFont) { font = newFont; }
 
         Color GetBoxColor()     const { return boxColor; }
         Color GetCheckColor()   const { return checkColor; }
@@ -41,6 +45,7 @@ class Checkbox : public Widget {
         bool checked;
 
         std::wstring text;
+        HFONT font;
         Color boxColor;
         Color checkColor;
         Color hoverColor;

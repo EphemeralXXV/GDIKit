@@ -3,8 +3,9 @@
 #include "Checkbox.h"
 #include "Color.h"
 
-Checkbox::Checkbox(const std::wstring& label) :
+Checkbox::Checkbox(std::wstring label) :
     text(label),
+    font(nullptr),
     checked(false),
     boxColor(Color::FromARGB(255, 50, 50, 50)),
     checkColor(Color::FromARGB(255, 20, 110, 220)),
@@ -43,10 +44,10 @@ void Checkbox::Render(HDC hdc) {
     // Draw label text
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     RECT textRect = { r.left + boxSize + 4, r.top, r.right, r.bottom };
     DrawTextW(hdc, text.c_str(), (int)text.size(), &textRect, DT_SINGLELINE | DT_VCENTER | DT_LEFT);
-    SelectObject(hdc, oldFont);
+    SelectObject(hdc, old);
 
     RestoreDC(hdc, saved);
 }
