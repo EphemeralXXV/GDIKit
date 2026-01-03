@@ -160,9 +160,12 @@ void Widget::RemoveMouseListener(const std::function<void(const MouseEvent&)>& c
     );
 }
 
-void Widget::FeedMouseEvent(const MouseEvent& e) {
+void Widget::InitFeedMouseEvent(const MouseEvent& e) {
     if(!effectiveDisplayed) return; // Non-displayed widgets should ignore events
+    FeedMouseEvent(e);
+};
 
+void Widget::FeedMouseEvent(const MouseEvent& e) {
     switch(e.type) {
         case MouseEventType::Enter:
         case MouseEventType::Leave:
@@ -209,7 +212,13 @@ void Widget::OnMouseUp(POINT p) {
 }
 
 // --- Rendering ------------------------------------------------------
-void Widget::Render(HDC hdc) {}
+void Widget::InitRender(HDC hdc) {
+    if(!effectiveDisplayed || !visible) return;
+    
+    int saved = SaveDC(hdc);
+    Render(hdc);
+    RestoreDC(hdc, saved);
+}
 
 // --- Other ----------------------------------------------------------
 void Widget::ResetTransientStates() {

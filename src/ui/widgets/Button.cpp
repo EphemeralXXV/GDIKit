@@ -21,10 +21,6 @@ Button::Button(std::wstring t) :
 }
 
 void Button::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
-    int saved = SaveDC(hdc);
-
     RECT r = AbsRect();
 
     // Background
@@ -51,8 +47,6 @@ void Button::Render(HDC hdc) {
     ::SetTextColor(hdc, textColor.toCOLORREF());
     DrawTextW(hdc, text.c_str(), (int)text.size(), &r, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
     SelectObject(hdc, old);
-
-    RestoreDC(hdc, saved);
 }
 
 void Button::SetOnClick(std::function<void()> cb) {

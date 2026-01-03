@@ -143,10 +143,6 @@ void Slider::DrawLabels(HDC hdc) {
 }
 
 void Slider::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
-    int saved = SaveDC(hdc);
-
     // Only draw what doesn't overflow
     // (track/handle takes precedence)
     if((showLabel || showValue)) {
@@ -168,8 +164,6 @@ void Slider::Render(HDC hdc) {
     else {
         OutputDebugStringA("[!] Set height is too small! Not drawing anything. Make sure widget height is no smaller than handle height.\n");
     }
-
-    RestoreDC(hdc, saved);
 }
 
 void Slider::UpdateValueFromMouse(int mouseX) {

@@ -16,11 +16,9 @@ RECT Label::ComputeRect(HDC hdc) {
     GetTextExtentPoint32W(hdc, text.c_str(), (int)text.size(), &size);
     SelectObject(hdc, old);
     return RECT{AbsX(), AbsY(), AbsX() + size.cx, AbsY() + size.cy};
-}
+} 
 
 void Label::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
     // If there is not enough space, skip drawing
     RECT computedRect = ComputeRect(hdc);
     RECT setRect = AbsRect();
@@ -32,8 +30,6 @@ void Label::Render(HDC hdc) {
         (setRect.right - setRect.left) < (computedRect.right - computedRect.left)
     ) return;
 
-    int saved = SaveDC(hdc);
-
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
     HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
@@ -41,5 +37,4 @@ void Label::Render(HDC hdc) {
     DrawTextW(hdc, text.c_str(), (int)text.size(), &setRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
     SelectObject(hdc, old);
-    RestoreDC(hdc, saved);
 }

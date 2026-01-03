@@ -190,11 +190,7 @@ void Menu::SetShowTitleBar(bool show) {
     }
 }
 
-void Menu::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-    
-    int saved = SaveDC(hdc);
-
+void Menu::Render(HDC hdc) {    
     // Clip children to menu bounds if overflow is hidden
     if(clipChildren) {
         RECT absRect = AbsRect();
@@ -208,6 +204,4 @@ void Menu::Render(HDC hdc) {
         // Draw resize handle
         RenderResizeHandle(hdc);
     }
-
-    RestoreDC(hdc, saved);
 }

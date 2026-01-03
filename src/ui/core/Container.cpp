@@ -77,8 +77,6 @@ void Container::SetBorder(const Color& color, int thickness, BorderSide sides) {
 }
 
 void Container::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
     // Background
     if(backgroundColor.a > 0) { // only draw if non-transparent
         HBRUSH br = CreateSolidBrush(backgroundColor.toCOLORREF());
@@ -116,17 +114,15 @@ void Container::Render(HDC hdc) {
 
     // Render children in order
     for(auto &c : children) {
-        if(c && c->IsVisible()) c->Render(hdc);
+        if(c) c->InitRender(hdc);
     }
 }
 
 void Container::FeedMouseEvent(const MouseEvent& e) {
-    if(!effectiveDisplayed) return;
-    
     // First feed the event to children back-to-front (events bubble up)
     for(auto it = children.rbegin(); it != children.rend(); ++it) {
-        if(*it && (*it)->IsVisible()) {
-            (*it)->FeedMouseEvent(e);
+        if(*it) {
+            (*it)->InitFeedMouseEvent(e);
         }
     }
 

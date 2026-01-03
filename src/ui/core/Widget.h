@@ -81,12 +81,11 @@ class Widget {
         void AddMouseListener(std::function<void(const MouseEvent&)> callback);
         void RemoveMouseListener(const std::function<void(const MouseEvent&)>& callback);
 
-        // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
-        // EXTREMELY IMPORTANT: make it virtual so containers can override (and e.g. propagate to children)
-        virtual void FeedMouseEvent(const MouseEvent& e);
+        // Pre-feeding logic (condition checks, etc.) - template method
+        virtual void InitFeedMouseEvent(const MouseEvent& e) final;
 
         // --- Rendering ---
-        virtual void Render(HDC hdc);
+        virtual void InitRender(HDC hdc) final; // Pre-render logic (condition checks, etc.) - template method
 
     protected:
         // Pointer to parent widget (container)
@@ -120,6 +119,10 @@ class Widget {
 
         void FireMouseEvent(const MouseEvent& e);
 
+        // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
+        // Contains actual feeding logic
+        virtual void FeedMouseEvent(const MouseEvent& e);
+
         virtual void OnMouseMove(POINT p);
         virtual void OnMouseDown(POINT p);
         virtual void OnMouseUp(POINT p);
@@ -129,4 +132,7 @@ class Widget {
         virtual void OnDisplayChanged(bool displayed) { if(!displayed) ResetTransientStates(); };
         virtual void OnVisibilityChanged(bool visible) { if(!visible) ResetTransientStates(); };
         virtual void ResetTransientStates();
+
+        // --- Rendering ---
+        virtual void Render(HDC hdc) {}; // Actual render logic
 };

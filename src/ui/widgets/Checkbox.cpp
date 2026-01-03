@@ -21,10 +21,6 @@ Checkbox::Checkbox(std::wstring label) :
 }
 
 void Checkbox::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
-    int saved = SaveDC(hdc);
-
     RECT r = AbsRect();
     int boxSize = height; // square box same height as widget
 
@@ -49,8 +45,6 @@ void Checkbox::Render(HDC hdc) {
     RECT textRect = { r.left + boxSize + 4, r.top, r.right, r.bottom };
     DrawTextW(hdc, text.c_str(), (int)text.size(), &textRect, DT_SINGLELINE | DT_VCENTER | DT_LEFT);
     SelectObject(hdc, old);
-
-    RestoreDC(hdc, saved);
 }
 
 void Checkbox::SetOnToggle(std::function<void(bool)> cb) {

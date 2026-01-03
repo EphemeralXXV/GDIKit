@@ -26,10 +26,6 @@ void SelectItem::SetOnSelect(std::function<void(size_t)> cb) {
 }
 
 void SelectItem::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
-    int saved = SaveDC(hdc);
-
     RECT r = AbsRect();
 
     // Background
@@ -64,5 +60,4 @@ void SelectItem::Render(HDC hdc) {
     );
 
     SelectObject(hdc, oldFont);
-    RestoreDC(hdc, saved);
 }

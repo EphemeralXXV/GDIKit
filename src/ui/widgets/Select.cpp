@@ -145,14 +145,10 @@ void Select::Close() {
 }
 
 void Select::Render(HDC hdc) {
-    if(!effectiveDisplayed || !visible) return;
-
     if(pendingOpen) {
         pendingOpen = false;
         Open();
     }
-
-    int saved = SaveDC(hdc);
 
     RECT r = AbsRect();
 
@@ -216,7 +212,6 @@ void Select::Render(HDC hdc) {
     );
 
     SelectObject(hdc, oldFont);
-    RestoreDC(hdc, saved);
 }
 
 void Select::ResetTransientStates() {
