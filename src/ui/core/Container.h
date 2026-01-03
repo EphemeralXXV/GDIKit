@@ -9,38 +9,41 @@
 #include "Border.h"
 
 class Container : public Widget {
-public:
-    using WidgetPtr = std::shared_ptr<Widget>;
-    
-    // Constructor
-    Container();
+    public:
+        using WidgetPtr = std::shared_ptr<Widget>;
+        
+        // Constructor
+        Container();
 
-    // Child management
-    void AddChild(const WidgetPtr& child);
-    void RemoveChild(const WidgetPtr& child);
-    void RemoveAllChildren();
-    const std::vector<WidgetPtr>& Children() const { return children; }
+        // Child management
+        void AddChild(const WidgetPtr& child);
+        void RemoveChild(const WidgetPtr& child);
+        void RemoveAllChildren();
+        const std::vector<WidgetPtr>& Children() const { return children; }
 
-    // --- Layout policy ---
-    void SetLayout(std::unique_ptr<Layout> newLayout);
-    Layout* GetLayout() const { return layout.get(); }
-    void UpdateInternalLayout() override;
+        // --- Layout policy ---
+        void SetLayout(std::unique_ptr<Layout> newLayout);
+        Layout* GetLayout() const { return layout.get(); }
+        void UpdateInternalLayout() override;
 
-    // Appearance
-    void SetBackgroundColor(const Color& newColor) { backgroundColor = newColor; }
-    Color GetBackgroundColor() const { return backgroundColor; }
+        // --- Display & Visibility ---
+        void UpdateEffectiveDisplay() override;
 
-    void SetBorder(const Color& color, int thickness = 1, BorderSide sides = BorderSide::All);
-    Border GetBorder() const { return border; }
+        // Appearance
+        void SetBackgroundColor(const Color& newColor) { backgroundColor = newColor; }
+        Color GetBackgroundColor() const { return backgroundColor; }
 
-    // Rendering
-    void Render(HDC hdc) override;
+        void SetBorder(const Color& color, int thickness = 1, BorderSide sides = BorderSide::All);
+        Border GetBorder() const { return border; }
 
-    void FeedMouseEvent(const MouseEvent& e);
+        // Rendering
+        void Render(HDC hdc) override;
 
-protected:
-    std::vector<WidgetPtr> children;
-    std::unique_ptr<Layout> layout;
-    Color backgroundColor;
-    Border border;
-};
+        void FeedMouseEvent(const MouseEvent& e);
+
+    protected:
+        std::vector<WidgetPtr> children;
+        std::unique_ptr<Layout> layout;
+        Color backgroundColor;
+        Border border;
+    };

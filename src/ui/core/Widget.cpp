@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "Widget.h"
 
 // Constructor
@@ -5,11 +7,28 @@ Widget::Widget() :
     parent(nullptr), rect({0, 0, 0, 0}),
     x(0), y(0), width(0), height(0),
     preferredWidth(0), preferredHeight(0),
-    visible(true), enabled(true),
-    hovered(false), pressed(false),
-    mouseDownInside(false),
+    displayed(true), effectiveDisplayed(true),
+    visible(true), enabled(true), hovered(false),
+    pressed(false), mouseDownInside(false),
     clipChildren(false)
 {}
+
+// Ancestors
+void Widget::SetParent(Widget* newParent) {
+    if(parent && !newParent) {
+        // parent = nullptr -- parent removes this child
+        OnRemovedFromTree();
+    }
+    parent = newParent;
+}
+
+Widget* Widget::GetMainContainer() const {
+    const Widget* w = this;
+    while(w->parent) {
+        w = w->parent;
+    }
+    return const_cast<Widget*>(w);
+}
 
 // --- Geometry -----------------------------------------------------
 // Absolute coordinate getters (relative => absolute)
@@ -82,6 +101,30 @@ int Widget::GetLayoutHeight() const {
     return preferredHeight > 0 ? preferredHeight : height;
 }
 
+// --- Display & Visibility --------------------------------------------
+void Widget::SetDisplayed(bool displayed) {
+    this->displayed = displayed;
+    UpdateEffectiveDisplay();
+}
+
+void Widget::UpdateEffectiveDisplay() {
+    // Apply actual displayed state as (user-set && inherited)
+    bool newEff = displayed &&
+        (!parent || parent->effectiveDisplayed);
+
+    if(newEff == effectiveDisplayed) {
+        return;
+    }
+
+    effectiveDisplayed = newEff;
+    OnDisplayChanged(effectiveDisplayed);
+}
+
+void Widget::SetVisible(bool visible)  {
+    this->visible = visible;
+    OnVisibilityChanged(visible);
+}
+
 // --- Mouse event handlers -------------------------------------------
 // Test if cursor currently over widget
 bool Widget::MouseInRect(POINT p) const {
@@ -100,11 +143,26 @@ bool Widget::MouseInRect(POINT p) const {
     return PtInRect(&clip, p);
 }
 
+// Mouse listeners
 void Widget::AddMouseListener(std::function<void(const MouseEvent&)> callback) {
     mouseListeners.push_back(callback);
 }
+void Widget::RemoveMouseListener(const std::function<void(const MouseEvent&)>& callback) {
+    // Erase any listener that compares equal to the given callback
+    mouseListeners.erase(
+        std::remove_if(mouseListeners.begin(), mouseListeners.end(),
+            [&](const std::function<void(const MouseEvent&)>& stored) {
+                // std::function doesn't have operator==, so compare targets
+                return stored.target_type() == callback.target_type() &&
+                    stored.target<void(const MouseEvent&)>() == callback.target<void(const MouseEvent&)>();
+            }),
+        mouseListeners.end()
+    );
+}
 
 void Widget::FeedMouseEvent(const MouseEvent& e) {
+    if(!effectiveDisplayed) return; // Non-displayed widgets should ignore events
+
     switch(e.type) {
         case MouseEventType::Enter:
         case MouseEventType::Leave:
@@ -152,3 +210,10 @@ void Widget::OnMouseUp(POINT p) {
 
 // --- Rendering ------------------------------------------------------
 void Widget::Render(HDC hdc) {}
+
+// --- Other ----------------------------------------------------------
+void Widget::ResetTransientStates() {
+    hovered = false;
+    pressed = false;
+    mouseDownInside = false;
+}

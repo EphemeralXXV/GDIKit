@@ -8,87 +8,96 @@
 #include "Color.h"
 
 class Slider : public Widget {
-public:
-    // Constructor
-    Slider(
-        std::wstring label,
-        float minVal,
-        float maxVal,
-        float step,
-        float val
-    );
+    public:
+        // Constructor
+        Slider(
+            std::wstring label,
+            float minVal,
+            float maxVal,
+            float step,
+            float val
+        );
 
-    // Appearance
-    std::wstring GetLabel() const { return label; }
-    void SetLabel(std::wstring l) { label = l; }
+        // Appearance
+        std::wstring GetLabel() const { return label; }
+        void SetLabel(std::wstring l) { label = l; }
 
-    HFONT GetFont() const { return font; }
-    void SetFont(HFONT newFont) { font = newFont; }
+        HFONT GetFont() const { return font; }
+        void SetFont(HFONT newFont) { font = newFont; }
 
-    float GetValue() const { return value; }
-    void SetValue(float newValue) { 
-        // Don't allow illegal values
-        value = std::clamp(newValue, minValue, maxValue);
-        if(onValueChanged) onValueChanged(value);
-    }
+        float GetValue() const { return value; }
+        void SetValue(float newValue) { 
+            // Don't allow illegal values
+            value = std::clamp(newValue, minValue, maxValue);
+            if(onValueChanged) onValueChanged(value);
+        }
 
-    float GetMinValue() const { return minValue; }
-    void SetMinValue(float newValue) { minValue = newValue; }
+        float GetMinValue() const { return minValue; }
+        void SetMinValue(float newValue) { minValue = newValue; }
 
-    float GetMaxValue() const { return maxValue; }
-    void SetMaxValue(float newValue) { maxValue = newValue; }
+        float GetMaxValue() const { return maxValue; }
+        void SetMaxValue(float newValue) { maxValue = newValue; }
 
-    float GetStep() const { return step; }
-    void SetStep(float newStep) {
-        step = std::max(0.0f, newStep);
-    }
+        float GetStep() const { return step; }
+        void SetStep(float newStep) {
+            step = std::max(0.0f, newStep);
+        }
 
-    void SetShowValue(bool show) { showValue = show; }
-    void SetShowLabel(bool show) { showLabel = show; }
+        void SetShowValue(bool show) { showValue = show; }
+        void SetShowLabel(bool show) { showLabel = show; }
 
-    void SetHandleWidth(int w) { handleWidth = w; }
+        void SetHandleWidth(int w) { handleWidth = w; }
+        void SetHandleHeight(int h) { handleHeight = h; }
 
-    // Colors
-    Color GetTrackColor()   const { return trackColor; }
-    Color GetHandleColor()  const { return handleColor; }
-    Color GetHoverColor()   const { return hoverColor; }
-    Color GetDragColor()    const { return dragColor; }
-    Color GetLabelColor()   const { return labelColor; }
-    void SetTrackColor(Color newColor)  { trackColor = newColor; }
-    void SetHandleColor(Color newColor) { handleColor = newColor; }
-    void SetHoverColor(Color newColor)  { hoverColor = newColor; }
-    void SetDragColor(Color newColor)   { dragColor = newColor; }
-    void SetLabelColor(Color newColor)  { labelColor = newColor; }
+        // Colors
+        Color GetTrackColor()   const { return trackColor; }
+        Color GetHandleColor()  const { return handleColor; }
+        Color GetHoverColor()   const { return hoverColor; }
+        Color GetDragColor()    const { return dragColor; }
+        Color GetLabelColor()   const { return labelColor; }
+        void SetTrackColor(Color newColor)  { trackColor = newColor; }
+        void SetHandleColor(Color newColor) { handleColor = newColor; }
+        void SetHoverColor(Color newColor)  { hoverColor = newColor; }
+        void SetDragColor(Color newColor)   { dragColor = newColor; }
+        void SetLabelColor(Color newColor)  { labelColor = newColor; }
 
-    // Rendering
-    RECT HandleRect() const;
-    void ComputeSliderOffsetY(HDC hdc);
-    void Render(HDC hdc) override;
+        // Rendering
+        RECT HandleRect() const;
+        int ComputeLabelHeight(HDC hdc);
+        void Render(HDC hdc) override;
 
-    // Behavior
-    void UpdateValueFromMouse(int mouseX);
-    void SetOnValueChanged(std::function<void(float)> cb);
+        // Behavior
+        void UpdateValueFromMouse(int mouseX);
+        void SetOnValueChanged(std::function<void(float)> cb);
 
-private:
-    float minValue;
-    float maxValue;
-    float step;
-    float value;
+    protected:
+        void ResetTransientStates() override;
 
-    int sliderOffsetY;
-    int handleWidth;
-    bool showValue;
-    bool showLabel;
-    bool isDragging;
-    bool handleHovered;
+    private:
+        float minValue;
+        float maxValue;
+        float step;
+        float value;
 
-    std::wstring label;
-    Color trackColor;
-    Color handleColor;
-    Color hoverColor;
-    Color dragColor;
-    Color labelColor;
-    HFONT font;
+        int sliderOffsetY;
+        int handleWidth;
+        int handleHeight;    // Effectively the height of the slider itself (minus the labels)
+        bool showValue;
+        bool showLabel;
+        bool isDragging;
+        bool handleHovered;
 
-    std::function<void(float)> onValueChanged;
+        std::wstring label;
+        Color trackColor;
+        Color handleColor;
+        Color hoverColor;
+        Color dragColor;
+        Color labelColor;
+        HFONT font;
+
+        std::function<void(float)> onValueChanged;
+
+        void DrawTrack(HDC hdc);
+        void DrawHandle(HDC hdc);
+        void DrawLabels(HDC hdc);
 };

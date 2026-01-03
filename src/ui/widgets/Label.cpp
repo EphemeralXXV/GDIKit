@@ -10,27 +10,35 @@ Label::Label(std::wstring t) :
 {}
 
 // Compute text geometry from its contents
-void Label::ComputeRect(HDC hdc) {
+RECT Label::ComputeRect(HDC hdc) {
     SIZE size;
     HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     GetTextExtentPoint32W(hdc, text.c_str(), (int)text.size(), &size);
     SelectObject(hdc, old);
-    SetSize(size.cx, size.cy);
+    return RECT{AbsX(), AbsY(), AbsX() + size.cx, AbsY() + size.cy};
 }
 
 void Label::Render(HDC hdc) {
-    if (!visible) return;
+    if(!effectiveDisplayed || !visible) return;
+
+    // If there is not enough space, skip drawing
+    RECT computedRect = ComputeRect(hdc);
+    RECT setRect = AbsRect();
+    if(
+        // Height
+        (setRect.bottom - setRect.top) < (computedRect.bottom - computedRect.top)
+        ||
+        // Width
+        (setRect.right - setRect.left) < (computedRect.right - computedRect.left)
+    ) return;
 
     int saved = SaveDC(hdc);
-
-    ComputeRect(hdc);
-    RECT r = AbsRect();
 
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
     HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
-    DrawTextW(hdc, text.c_str(), (int)text.size(), &r, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+    DrawTextW(hdc, text.c_str(), (int)text.size(), &setRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
     SelectObject(hdc, old);
     RestoreDC(hdc, saved);

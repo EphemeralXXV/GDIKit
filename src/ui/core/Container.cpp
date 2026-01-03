@@ -59,6 +59,17 @@ void Container::UpdateInternalLayout() {
     OnInternalLayoutUpdated();
 }
 
+void Container::UpdateEffectiveDisplay() {
+    Widget::UpdateEffectiveDisplay();
+
+    // Propagate to children
+    for(auto& child : children) {
+        if(child) {
+            child->UpdateEffectiveDisplay();
+        }
+    }
+}
+
 void Container::SetBorder(const Color& color, int thickness, BorderSide sides) {
     border.color = color;
     border.thickness = thickness;
@@ -66,7 +77,7 @@ void Container::SetBorder(const Color& color, int thickness, BorderSide sides) {
 }
 
 void Container::Render(HDC hdc) {
-    if(!visible) return;
+    if(!effectiveDisplayed || !visible) return;
 
     // Background
     if(backgroundColor.a > 0) { // only draw if non-transparent
@@ -110,6 +121,8 @@ void Container::Render(HDC hdc) {
 }
 
 void Container::FeedMouseEvent(const MouseEvent& e) {
+    if(!effectiveDisplayed) return;
+    
     // First feed the event to children back-to-front (events bubble up)
     for(auto it = children.rbegin(); it != children.rend(); ++it) {
         if(*it && (*it)->IsVisible()) {

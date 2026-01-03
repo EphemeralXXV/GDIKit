@@ -118,7 +118,7 @@ void Menu::InitHeader() {
 
     closeButton = std::make_shared<Button>(L"×");
     closeButton->SetOnClick([&](){
-        SetVisible(false);
+        SetDisplayed(false);
     });
 
     collapseButton = std::make_shared<Button>(L"▾");
@@ -144,9 +144,9 @@ void Menu::OnInternalLayoutUpdated() {
     // Geometry is only set here (and not during initialization), because it's a dynamic thing
     if(headerContainer) {
         headerContainer->SetSize(width, titleBarHeight);
-        titleLabel->SetPos(6, 4);
-        closeButton->SetPosSize(width - 20, 2, 18, 18);
-        collapseButton->SetPosSize(width - 40, 2, 18, 18);
+        titleLabel->SetPosSize(6, 0, width - 40 - 6, titleBarHeight);
+        closeButton->SetPosSize(width - 20, 2, titleBarHeight - 4, titleBarHeight - 4);
+        collapseButton->SetPosSize(width - 40, 2, titleBarHeight - 4, titleBarHeight - 4);
     }
     if(bodyContainer) {
         bodyContainer->SetSize(width, height - titleBarHeight);
@@ -164,7 +164,7 @@ void Menu::SetPosSize(int x, int y, int w, int h) {
 
 void Menu::SetCollapsed(bool collapsed) {
     isCollapsed = collapsed;
-    bodyContainer->SetVisible(!collapsed);
+    bodyContainer->SetDisplayed(!collapsed);
     // shrink height to header only
     if(collapsed) {
         // Cache expanded size
@@ -180,7 +180,7 @@ void Menu::SetTitle(const std::wstring &newTitle) {
     titleLabel->SetText(newTitle);
 }
 void Menu::SetShowTitleBar(bool show) { 
-    headerContainer->SetVisible(show);
+    headerContainer->SetDisplayed(show);
     // shrink height to content only
     if(show) {
         SetSize(width, preferredHeight);
@@ -191,8 +191,7 @@ void Menu::SetShowTitleBar(bool show) {
 }
 
 void Menu::Render(HDC hdc) {
-    if(!visible)
-        return;
+    if(!effectiveDisplayed || !visible) return;
     
     int saved = SaveDC(hdc);
 

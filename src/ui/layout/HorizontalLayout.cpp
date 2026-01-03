@@ -11,7 +11,7 @@ void HorizontalLayout::Apply() {
     
     int x = 0;
 
-    for (auto& child : container->Children()) {
+    for(auto& child : container->Children()) {
         int w = child->GetLayoutWidth();
         int h = child->GetLayoutHeight();
 

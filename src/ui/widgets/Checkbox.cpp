@@ -21,7 +21,8 @@ Checkbox::Checkbox(std::wstring label) :
 }
 
 void Checkbox::Render(HDC hdc) {
-    if(!visible) return;
+    if(!effectiveDisplayed || !visible) return;
+
     int saved = SaveDC(hdc);
 
     RECT r = AbsRect();

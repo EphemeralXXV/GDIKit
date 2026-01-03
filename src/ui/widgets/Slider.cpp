@@ -21,8 +21,9 @@ Slider::Slider(
     value(val),
     showValue(true),
     showLabel(true),
-    handleWidth(10),
     sliderOffsetY(0),
+    handleWidth(10),
+    handleHeight(20),
     trackColor(Color::FromRGB(100, 100, 100)),
     handleColor(Color::FromRGB(180, 180, 180)),
     hoverColor(Color::FromRGB(220, 220, 220)),
@@ -75,47 +76,36 @@ RECT Slider::HandleRect() const {
     float t = (value - minValue) / (maxValue - minValue);
     int x = AbsX() + int(t * (width - handleWidth));
     int y = AbsY() + sliderOffsetY;
-    return RECT{x, y, x + handleWidth, y + preferredHeight};
+    return RECT{x, y, x + handleWidth, y + handleHeight};
 }
 
-void Slider::ComputeSliderOffsetY(HDC hdc) {
+int Slider::ComputeLabelHeight(HDC hdc) {
     if(!(showLabel || showValue)) {
-        sliderOffsetY = 0;
-        return;
+        return 0;
     }
+    int labelHeight = 0;
     HFONT oldFont = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
-    int textHeight = tm.tmHeight;
-    sliderOffsetY = textHeight + 2; // 2px padding
+    labelHeight = tm.tmHeight + 2; // 2px padding
     SelectObject(hdc, oldFont);
+
+    return labelHeight;
 }
 
-void Slider::Render(HDC hdc) {
-    if(!visible) return;
-
-    int saved = SaveDC(hdc);
-
-    // Compute text offset if needed
-    ComputeSliderOffsetY(hdc);
-
-    // Adjust height to label offset
-    int correctedHeight = sliderOffsetY + preferredHeight;
-    if(height != correctedHeight)
-        SetSize(width, correctedHeight);
-
-    // Track
+void Slider::DrawTrack(HDC hdc) {
     RECT track = {
         AbsX(),
-        AbsY() + sliderOffsetY + preferredHeight/2 - 2,
+        AbsY() + sliderOffsetY + handleHeight/2 - 2,
         AbsX() + width,
-        AbsY() + sliderOffsetY + preferredHeight/2 + 2
+        AbsY() + sliderOffsetY + handleHeight/2 + 2
     };
     HBRUSH br = CreateSolidBrush(trackColor.toCOLORREF());
     FillRect(hdc, &track, br);
     DeleteObject(br);
+}
 
-    // Handle
+void Slider::DrawHandle(HDC hdc) {
     RECT hr = HandleRect();
     Color handleCol = handleColor;
 
@@ -126,18 +116,23 @@ void Slider::Render(HDC hdc) {
     if(isDragging) { // Dragging takes precendence over hovering
         handleCol = dragColor;
     }
-    br = CreateSolidBrush(handleCol.toCOLORREF());
+    HBRUSH br = CreateSolidBrush(handleCol.toCOLORREF());
     FillRect(hdc, &hr, br);
     DeleteObject(br);
+}
 
-    // Add labels above slider
+void Slider::DrawLabels(HDC hdc) {
+    if(!(showLabel || showValue)) return;
+
     HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     RECT textRect = { AbsX(), AbsY(), AbsX() + width, AbsY() + sliderOffsetY};
-
-    // Left-aligned label
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, labelColor.toCOLORREF());
-    DrawTextW(hdc, label.c_str(), -1, &textRect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+    // Left-aligned label
+    if(showLabel) {
+        DrawTextW(hdc, label.c_str(), -1, &textRect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+    }
 
     // Right-aligned numeric value
     if(showValue) {
@@ -145,6 +140,34 @@ void Slider::Render(HDC hdc) {
         DrawTextW(hdc, val.c_str(), -1, &textRect, DT_RIGHT | DT_SINGLELINE | DT_VCENTER);
     }
     SelectObject(hdc, oldFont);
+}
+
+void Slider::Render(HDC hdc) {
+    if(!effectiveDisplayed || !visible) return;
+
+    int saved = SaveDC(hdc);
+
+    // Only draw what doesn't overflow
+    // (track/handle takes precedence)
+    if((showLabel || showValue)) {
+        int labelHeight = ComputeLabelHeight(hdc);
+        
+        // Add offset and draw labels only if labels are going to fit
+        if(height >= handleHeight + labelHeight) {
+            sliderOffsetY = labelHeight;
+            DrawLabels(hdc);
+        }
+        else {
+            OutputDebugStringA("[!] Set height is too small for labels! Skipping drawing...\n");
+        }
+    }
+    if(height >= handleHeight) {
+        DrawTrack(hdc);
+        DrawHandle(hdc);
+    }
+    else {
+        OutputDebugStringA("[!] Set height is too small! Not drawing anything. Make sure widget height is no smaller than handle height.\n");
+    }
 
     RestoreDC(hdc, saved);
 }
@@ -170,4 +193,9 @@ void Slider::UpdateValueFromMouse(int mouseX) {
 
 void Slider::SetOnValueChanged(std::function<void(float)> cb) {
     onValueChanged = cb;
+}
+
+void Slider::ResetTransientStates() {
+    Widget::ResetTransientStates();
+    isDragging = false;
 }

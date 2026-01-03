@@ -18,12 +18,17 @@ class Widget {
         Widget();
         virtual ~Widget() {};
 
+        // Ancestors
         Widget* GetParent() const { return parent; }
-        void SetParent(Widget* newParent) { parent = newParent; }
+        void SetParent(Widget* newParent);
+        Widget* GetMainContainer() const; // Gets the topmost non-Root container
 
         // Visual state
+        bool IsDisplayed() const { return displayed; }
+        void SetDisplayed(bool displayed);
+
         bool IsVisible() const { return visible; }
-        void SetVisible(bool visible) { this->visible = visible; }
+        void SetVisible(bool visible);
 
         bool IsEnabled() const { return enabled; }
         void SetEnabled(bool enabled) { this->enabled = enabled; }
@@ -60,16 +65,21 @@ class Widget {
         void SetPos(int x, int y);                      // Sets the absolute position
         void SetSize(int w, int h);                     // Sets the size
         void SetPosSize(int x, int y, int w, int h);    // Sets the absolute position and size
-        void SetPreferredSize(int w, int h);
 
         // Updates automatic layouts on geometry changes
         virtual void UpdateInternalLayout(); // INTERNAL USE ONLY!
         virtual void OnInternalLayoutUpdated(); // optional callback
+
+        // --- Display & Visibility -----------------------------------------
+        virtual void UpdateEffectiveDisplay();  // Updates actual display state based on ancestors state
+                                                // Virtual, because Container should override to propagate further
         
         // Test if cursor currently over widget
         bool MouseInRect(POINT p) const;
 
+        // Mouse listeners
         void AddMouseListener(std::function<void(const MouseEvent&)> callback);
+        void RemoveMouseListener(const std::function<void(const MouseEvent&)>& callback);
 
         // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
         // EXTREMELY IMPORTANT: make it virtual so containers can override (and e.g. propagate to children)
@@ -85,13 +95,10 @@ class Widget {
         // Bounding rectangle relative to parent
         RECT rect;
 
-        // Convenient expressions of rect geometry
-        int x, y;                               // Origin (top-left) relative to parent
-        int width, height;                      // Internal widget size
-        int preferredWidth, preferredHeight;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
-
         // Widget states
-        bool visible;
+        bool displayed; // a'la CSS display
+        bool effectiveDisplayed; // Internal/inherited display state (must be non-public)
+        bool visible;   // a'la CSS visible
         bool enabled;
         bool clipChildren;
         bool hovered;
@@ -99,8 +106,14 @@ class Widget {
         bool mouseDownInside; // tracks if mouse click began within widget
 
         // --- Geometry -----------------------------------------------------
+        // Convenient expressions of rect geometry
+        int x, y;                               // Origin (top-left) relative to parent
+        int width, height;                      // Internal widget size
+        int preferredWidth, preferredHeight;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
+        void SetPreferredSize(int w, int h);    // Should only be used internally, mainly by layouts
+
         // Helper functions reacting to geometry changes
-        void UpdateConvenienceGeometry();               // Updates convenience geometry vars on internal geometry changes
+        void UpdateConvenienceGeometry();       // Updates convenience geometry vars on internal geometry changes
 
         // --- Mouse events  ------------------------------------------------
         std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
@@ -110,4 +123,10 @@ class Widget {
         virtual void OnMouseMove(POINT p);
         virtual void OnMouseDown(POINT p);
         virtual void OnMouseUp(POINT p);
+
+        // --- Other events  ------------------------------------------------
+        virtual void OnRemovedFromTree() { ResetTransientStates(); };
+        virtual void OnDisplayChanged(bool displayed) { if(!displayed) ResetTransientStates(); };
+        virtual void OnVisibilityChanged(bool visible) { if(!visible) ResetTransientStates(); };
+        virtual void ResetTransientStates();
 };
