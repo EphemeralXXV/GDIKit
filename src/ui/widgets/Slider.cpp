@@ -73,7 +73,9 @@ Slider::Slider(
 // Compute handle rect in absolute coordinates
 RECT Slider::HandleRect() const {
     // Current handle position as a fraction of the whole slider
-    float t = (value - minValue) / (maxValue - minValue);
+    float t = (maxValue > minValue) ?
+        // Zero division guard
+        ((value - minValue) / (maxValue - minValue)) : 0.0f;
     int x = AbsX() + int(t * (width - handleWidth));
     int y = AbsY() + sliderOffsetY;
     return RECT{x, y, x + handleWidth, y + handleHeight};
@@ -175,13 +177,13 @@ void Slider::UpdateValueFromMouse(int mouseX) {
     float newValue = minValue + t * (maxValue - minValue);
 
     // Snap to step
-    if(step > 0.0f)
+    if(step > 0.0f) {
         newValue = minValue + step * std::round((newValue - minValue) / step);
+    }
 
     // Update value, fire callback
     if(newValue != value) {
-        value = newValue;
-        if(onValueChanged) onValueChanged(value);
+        SetValue(newValue);
     }
 }
 

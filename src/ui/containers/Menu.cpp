@@ -16,53 +16,53 @@ Menu::Menu(const std::wstring &t) :
     InitHeader();
     InitBody();
     SetLayout(std::make_unique<VerticalLayout>());
-    AddMouseListener([this](const MouseEvent& e) {
-        POINT p = e.pos;
+    // AddMouseListener([this](const MouseEvent& e) {
+    //     POINT p = e.pos;
 
-        switch(e.type) {
-            case MouseEventType::Move:
-                if(isDragging) {
-                    SetPos(p.x - dragOffset.x, p.y - dragOffset.y);
-                }
-                if(isResizing) {
-                    int newWidth = p.x - AbsX() + resizeOffset.x;
-                    if(newWidth < 0) break; // Negative size is invalid; don't bother continuing
+    //     switch(e.type) {
+    //         case MouseEventType::Move:
+    //             if(isDragging) {
+    //                 SetPos(p.x - dragOffset.x, p.y - dragOffset.y);
+    //             }
+    //             if(isResizing) {
+    //                 int newWidth = p.x - AbsX() + resizeOffset.x;
+    //                 if(newWidth < 0) break; // Negative size is invalid; don't bother continuing
 
-                    int newHeight = p.y - AbsY() + resizeOffset.y;
-                    if(newHeight < 0) break;
+    //                 int newHeight = p.y - AbsY() + resizeOffset.y;
+    //                 if(newHeight < 0) break;
 
-                    SetSize(newWidth, newHeight);
-                }
-                break;
+    //                 SetSize(newWidth, newHeight);
+    //             }
+    //             break;
 
-            case MouseEventType::Down: {
-                // Resize handle
-                RECT resizeHandleAbsRect = ResizeHandleRect();
-                if(PtInRect(&resizeHandleAbsRect, p)) {
-                    isResizing = true;
-                    resizeOffset.x = AbsRight() - p.x;
-                    resizeOffset.y = AbsBottom() - p.y;
-                    return;
-                }
-                // Title bar drag -- navigation buttons take precedence!
-                if(headerContainer->MouseInRect(p) &&
-                    !collapseButton->MouseInRect(p) &&
-                    !closeButton->MouseInRect(p)
-                ) {
-                    isDragging = true;
-                    dragOffset.x = p.x - AbsX();
-                    dragOffset.y = p.y - AbsY();
-                    return;
-                }
-                break;
-            }
+    //         case MouseEventType::Down: {
+    //             // Resize handle
+    //             RECT resizeHandleAbsRect = ResizeHandleRect();
+    //             if(PtInRect(&resizeHandleAbsRect, p)) {
+    //                 isResizing = true;
+    //                 resizeOffset.x = AbsRight() - p.x;
+    //                 resizeOffset.y = AbsBottom() - p.y;
+    //                 return;
+    //             }
+    //             // Title bar drag -- navigation buttons take precedence!
+    //             if(headerContainer->MouseInRect(p) &&
+    //                 !collapseButton->MouseInRect(p) &&
+    //                 !closeButton->MouseInRect(p)
+    //             ) {
+    //                 isDragging = true;
+    //                 dragOffset.x = p.x - AbsX();
+    //                 dragOffset.y = p.y - AbsY();
+    //                 return;
+    //             }
+    //             break;
+    //         }
             
-            case MouseEventType::Up:
-                isDragging = false;
-                isResizing = false;
-                break;
-        }
-    });
+    //         case MouseEventType::Up:
+    //             isDragging = false;
+    //             isResizing = false;
+    //             break;
+    //     }
+    // });
 }
 
 // Resize handle in the bottom-right of the menu
@@ -112,8 +112,22 @@ void Menu::InitHeader() {
     headerContainer = std::make_shared<Container>();
     headerContainer->SetBackgroundColor(Color::FromRGB(60, 60, 60));
     headerContainer->SetBorder(Color::FromRGB(20, 20, 20), 1, BorderSide::Bottom);
+    headerContainer->AddMouseListener([this](const MouseEvent& e){
+        if(e.type == MouseEventType::Down && !collapseButton->MouseInRect(e.pos)){
+            isDragging = true;
+            dragOffset.x = e.pos.x - AbsX();
+            dragOffset.y = e.pos.y - AbsY();
+        }
+        else if(e.type == MouseEventType::Move && isDragging){
+            SetPos(e.pos.x - dragOffset.x, e.pos.y - dragOffset.y);
+        }
+        else if(e.type == MouseEventType::Up){
+            isDragging = false;
+        }
+    });
 
     titleLabel = std::make_shared<Label>(title);
+    titleLabel->SetMouseEventsIgnoring(true); // Ignore mouse events to allow title bar dragging
     titleLabel->SetTextColor(Color::FromRGB(220, 220, 220));
 
     closeButton = std::make_shared<Button>(L"×");
@@ -135,6 +149,21 @@ void Menu::InitHeader() {
 }
 void Menu::InitBody() {
     bodyContainer = std::make_shared<Container>();
+    bodyContainer->AddMouseListener([this](const MouseEvent& e){
+        RECT rh = ResizeHandleRect();
+        if(e.type == MouseEventType::Down && PtInRect(&rh, e.pos)){
+            isResizing = true;
+            resizeOffset.x = AbsRight() - e.pos.x;
+            resizeOffset.y = AbsBottom() - e.pos.y;
+        }
+        else if(e.type == MouseEventType::Move && isResizing){
+            SetSize(e.pos.x - AbsX() + resizeOffset.x, e.pos.y - AbsY() + resizeOffset.y);
+        }
+        else if(e.type == MouseEventType::Up){
+            isResizing = false;
+        }
+    });
+
     AddChild(bodyContainer);
 }
 

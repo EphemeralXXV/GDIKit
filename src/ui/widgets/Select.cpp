@@ -29,8 +29,9 @@ Select::Select(std::vector<SelectItemPtr> its) :
 }
 
 Select::SelectItemPtr Select::GetSelectedItem() const {
-    if(selectedIndex < 0 || selectedIndex >= (int)items.size())
+    if(selectedIndex < 0 || selectedIndex >= (int)items.size()) {
         return nullptr;
+    }
     return items[selectedIndex];
 }
 

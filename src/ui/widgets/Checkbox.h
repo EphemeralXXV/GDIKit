@@ -13,11 +13,7 @@ class Checkbox : public Widget {
 
         // State
         bool IsChecked() const { return checked; }
-        void SetChecked(bool state) {
-            if(state == checked) return;
-            checked = state;
-            if(onToggle) onToggle(checked);
-        }
+        void SetChecked(bool state);
 
         // Appearance
         std::wstring GetText() const { return text; }

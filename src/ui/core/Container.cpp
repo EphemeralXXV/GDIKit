@@ -118,14 +118,37 @@ void Container::Render(HDC hdc) {
     }
 }
 
-void Container::FeedMouseEvent(const MouseEvent& e) {
-    // First feed the event to children back-to-front (events bubble up)
+bool Container::FeedMouseEvent(const MouseEvent& e) {
+    bool handled = false;
+    Widget* root = GetMainContainer();
+
+    // Move should update hover state for ALL children
+    // because Move is not an exclusive event (e.g. might leave one widget and enter another in the event)
+    if(e.type == MouseEventType::Move) {
+        // First feed the event to children back-to-front (events bubble up)
+        for(auto it = children.rbegin(); it != children.rend(); ++it) {
+            if(*it) {
+                handled = (*it)->InitFeedMouseEvent(e) || handled;
+            }
+        }
+        // Finally give the container itself a chance to handle the event
+        bool selfHandled = Widget::FeedMouseEvent(e);
+        handled = handled || selfHandled;
+    }
+
+    // Other mouse events: stop on first consumer (hit test behavior)
     for(auto it = children.rbegin(); it != children.rend(); ++it) {
-        if(*it) {
-            (*it)->InitFeedMouseEvent(e);
+        if(*it && (*it)->InitFeedMouseEvent(e)) {
+            handled = true;
+            break;
         }
     }
 
-    // Finally give the container itself a chance to handle the event
-    Widget::FeedMouseEvent(e);
+
+    // Container itself, or always root
+    if(!handled || this == root) {
+        handled = Widget::FeedMouseEvent(e);
+    }
+
+    return handled;
 }

@@ -39,7 +39,7 @@ class Container : public Widget {
         // Rendering
         void Render(HDC hdc) override;
 
-        void FeedMouseEvent(const MouseEvent& e);
+        bool FeedMouseEvent(const MouseEvent& e) override;
 
     protected:
         std::vector<WidgetPtr> children;

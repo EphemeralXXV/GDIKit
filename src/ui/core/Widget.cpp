@@ -10,7 +10,7 @@ Widget::Widget() :
     displayed(true), effectiveDisplayed(true),
     visible(true), enabled(true), hovered(false),
     pressed(false), mouseDownInside(false),
-    clipChildren(false)
+    ignoreMouseEvents(false), clipChildren(false)
 {}
 
 // Ancestors
@@ -160,46 +160,64 @@ void Widget::RemoveMouseListener(const std::function<void(const MouseEvent&)>& c
     );
 }
 
-void Widget::InitFeedMouseEvent(const MouseEvent& e) {
-    if(!effectiveDisplayed) return; // Non-displayed widgets should ignore events
-    FeedMouseEvent(e);
-};
+bool Widget::InitFeedMouseEvent(const MouseEvent& e) {
+    if(!effectiveDisplayed || ignoreMouseEvents) return false; // Non-displayed widgets should ignore events
+    return FeedMouseEvent(e);
+}
 
-void Widget::FeedMouseEvent(const MouseEvent& e) {
+bool Widget::FeedMouseEvent(const MouseEvent& e) {
+    bool handled = false;
     switch(e.type) {
         case MouseEventType::Enter:
         case MouseEventType::Leave:
-        case MouseEventType::Move:  OnMouseMove(e.pos); break;
-        case MouseEventType::Down:  OnMouseDown(e.pos); break;
+        case MouseEventType::Move:  handled = OnMouseMove(e.pos); break;
+        case MouseEventType::Down:  handled = OnMouseDown(e.pos); break;
         case MouseEventType::Click:
-        case MouseEventType::Up:    OnMouseUp(e.pos);   break;
+        case MouseEventType::Up:    handled = OnMouseUp(e.pos); break;
     }
+    return handled;
 }
 
 void Widget::FireMouseEvent(const MouseEvent& e) {
-    for(auto& listener : mouseListeners)
+    for(auto& listener : mouseListeners) {
         listener(e);
+    }
 }
 
-void Widget::OnMouseMove(POINT p) {
+bool Widget::OnMouseMove(POINT p) {
     bool wasHovered = hovered; // read old state
     hovered = MouseInRect(p);  // read current state
 
-    if(hovered && !wasHovered) FireMouseEvent({MouseEventType::Enter, p, MouseButton::Left});
-    if(!hovered && wasHovered) FireMouseEvent({MouseEventType::Leave, p, MouseButton::Left});
+    if(hovered && !wasHovered) {
+        FireMouseEvent({MouseEventType::Enter, p, MouseButton::Left});
+    }
+    if(!hovered && wasHovered) {
+        FireMouseEvent({MouseEventType::Leave, p, MouseButton::Left});
+    }
     // Fire Move also if pressed - in case of dragging, for example
-    if(hovered || pressed) FireMouseEvent({MouseEventType::Move, p, MouseButton::Left});
+    if(hovered || pressed) {
+        FireMouseEvent({MouseEventType::Move, p, MouseButton::Left});
+    }
+
+    // Consume only if actively dragging - other movements may not be exclusive
+    // (especially when simultaneously leaving one widget and entering another)
+    return pressed;
 }
-void Widget::OnMouseDown(POINT p) {
-    if(!enabled) return;
+bool Widget::OnMouseDown(POINT p) {
+    if(!enabled) return false;
+
     if(MouseInRect(p)) {
         pressed = true;
         mouseDownInside = true; // track click start
         FireMouseEvent({MouseEventType::Down, p, MouseButton::Left});
+        return true;
     }
+    return false;
 }
-void Widget::OnMouseUp(POINT p) {
-    if(!enabled) return;
+bool Widget::OnMouseUp(POINT p) {
+    if(!enabled) return false;
+
+    bool handled = pressed;
     if(pressed) {
         // Let MouseUp happen outside widget, e.g. to cancel selection
         FireMouseEvent({MouseEventType::Up, p, MouseButton::Left});
@@ -209,12 +227,15 @@ void Widget::OnMouseUp(POINT p) {
     }
     pressed = false;
     mouseDownInside = false;
+
+    return handled;
 }
 
 // --- Rendering ------------------------------------------------------
 void Widget::InitRender(HDC hdc) {
     if(!effectiveDisplayed || !visible) return;
     
+    // Render must not call SaveDC/RestoreDC again - it's taken care of here
     int saved = SaveDC(hdc);
     Render(hdc);
     RestoreDC(hdc, saved);

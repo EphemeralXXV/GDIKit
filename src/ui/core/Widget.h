@@ -82,7 +82,11 @@ class Widget {
         void RemoveMouseListener(const std::function<void(const MouseEvent&)>& callback);
 
         // Pre-feeding logic (condition checks, etc.) - template method
-        virtual void InitFeedMouseEvent(const MouseEvent& e) final;
+        virtual bool InitFeedMouseEvent(const MouseEvent& e) final;
+
+        // Ignore mouse events to let them fall through to ancestors
+        void SetMouseEventsIgnoring(bool ignore) { ignoreMouseEvents = ignore; }
+        bool IsIgnoringMouseEvents() { return ignoreMouseEvents; }
 
         // --- Rendering ---
         virtual void InitRender(HDC hdc) final; // Pre-render logic (condition checks, etc.) - template method
@@ -103,6 +107,7 @@ class Widget {
         bool hovered;
         bool pressed;
         bool mouseDownInside; // tracks if mouse click began within widget
+        bool ignoreMouseEvents; // a'la pointer-events: none
 
         // --- Geometry -----------------------------------------------------
         // Convenient expressions of rect geometry
@@ -121,11 +126,11 @@ class Widget {
 
         // Public FireMouseEvent wrapper for forwarding mouse events from system or parents
         // Contains actual feeding logic
-        virtual void FeedMouseEvent(const MouseEvent& e);
+        virtual bool FeedMouseEvent(const MouseEvent& e);
 
-        virtual void OnMouseMove(POINT p);
-        virtual void OnMouseDown(POINT p);
-        virtual void OnMouseUp(POINT p);
+        virtual bool OnMouseMove(POINT p);
+        virtual bool OnMouseDown(POINT p);
+        virtual bool OnMouseUp(POINT p);
 
         // --- Other events  ------------------------------------------------
         virtual void OnRemovedFromTree() { ResetTransientStates(); };

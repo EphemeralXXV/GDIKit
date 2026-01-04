@@ -14,10 +14,15 @@ Checkbox::Checkbox(std::wstring label) :
 {
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
-            checked = !checked;
-            if(onToggle) onToggle(checked); // Fire user-provided callback
+            SetChecked(!checked);
         }
     });
+}
+
+void Checkbox::SetChecked(bool state) {
+    if(state == checked) return;
+    checked = state;
+    if(onToggle) onToggle(checked); // Fire user-provided callback
 }
 
 void Checkbox::Render(HDC hdc) {
