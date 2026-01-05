@@ -3,6 +3,7 @@
 #include "Select.h"
 #include "Root.h"
 #include "Color.h"
+#include "Border.h"
 #include "VerticalLayout.h"
 #include "ScopedGDI.h"
 
@@ -18,6 +19,7 @@ Select::Select(std::vector<SelectItemPtr> its) :
     borderColor(Color::FromRGB(20, 20, 20)),
     textColor(Color::FromRGB(255, 255, 255))
 {
+    SetBorder(borderColor, 1, BorderSide::All);
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
             if(open) {
@@ -156,26 +158,20 @@ void Select::Render(HDC hdc) {
     RECT r = AbsRect();
 
     // --- Background ------------------------------------------------------
-    COLORREF brushColor;
+    Color bgColor;
     if(!enabled) {
-        brushColor = RGB(120,120,120);
+        bgColor = Color::FromRGB(120,120,120);
     }
     else if(pressed) {
-        brushColor = pressedColor.toCOLORREF();
+        bgColor = pressedColor;
     }
     else if(hovered) {
-        brushColor = hoverColor.toCOLORREF();
+        bgColor = hoverColor;
     }
     else {
-        brushColor = backColor.toCOLORREF();
+        bgColor = backColor;
     }
-    ScopedBrush br(hdc, brushColor);
-    FillRect(hdc, &r, br.get());
-
-    // --- Border ----------------------------------------------------------
-    ScopedPen pen(hdc, PS_SOLID, 1, borderColor.toCOLORREF());
-    ScopedSelectBrush oldBrush(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
-    Rectangle(hdc, r.left, r.top, r.right, r.bottom);
+    SetBackgroundColor(bgColor);
 
     // --- Text ------------------------------------------------------------
     SetBkMode(hdc, TRANSPARENT);

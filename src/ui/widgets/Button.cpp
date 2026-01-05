@@ -2,6 +2,7 @@
 #include <string>
 
 #include "Color.h"
+#include "Border.h"
 #include "ScopedGDI.h"
 #include "Button.h"
 
@@ -14,6 +15,7 @@ Button::Button(std::wstring t) :
     borderColor(Color::FromRGB(0,0,0)),
     textColor(Color::FromRGB(255,255,255))
 {
+    SetBorder(borderColor, 1, BorderSide::All);
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
             if(onClick) onClick();
@@ -25,18 +27,12 @@ void Button::Render(HDC hdc) {
     RECT r = AbsRect();
 
     // Background
-    COLORREF brushColor;
-    if(!enabled) brushColor = RGB(120,120,120);
-    else if(pressed) brushColor = pressColor.toCOLORREF();
-    else if(hovered) brushColor = hoverColor.toCOLORREF();
-    else brushColor = backColor.toCOLORREF();
-    ScopedBrush br(hdc, brushColor);
-    FillRect(hdc, &r, br.get());
-
-    // Border
-    ScopedPen pen(hdc, PS_SOLID, 1, borderColor.toCOLORREF());
-    ScopedSelectBrush brush(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
-    Rectangle(hdc, r.left, r.top, r.right, r.bottom);
+    Color bgColor;
+    if(!enabled) bgColor = Color::FromRGB(120,120,120);
+    else if(pressed) bgColor = pressColor;
+    else if(hovered) bgColor = hoverColor;
+    else bgColor = backColor;
+    SetBackgroundColor(bgColor);
 
     // Text
     SetBkMode(hdc, TRANSPARENT);

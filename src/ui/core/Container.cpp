@@ -1,11 +1,8 @@
 #include <algorithm>
 
 #include "Container.h"
-#include "ScopedGDI.h"
 
-Container::Container() :
-    backgroundColor(Color::FromARGB(0, 0, 0, 0))
-{
+Container::Container() {
     // default container behavior
 }
 
@@ -71,43 +68,7 @@ void Container::UpdateEffectiveDisplay() {
     }
 }
 
-void Container::SetBorder(const Color& color, int thickness, BorderSide sides) {
-    border.color = color;
-    border.thickness = thickness;
-    border.sides = sides;
-}
-
 void Container::Render(HDC hdc) {
-    // Background
-    if(backgroundColor.a > 0) { // only draw if non-transparent
-        ScopedBrush br(hdc, backgroundColor.toCOLORREF());
-        RECT r = AbsRect();
-        FillRect(hdc, &r, br.get());
-    }
-
-    // Border
-    if(border.thickness > 0) {
-        ScopedPen pen(hdc, PS_SOLID, border.thickness, border.color.toCOLORREF());
-        RECT r = AbsRect();
-
-        if(HasSide(border.sides, BorderSide::Top)) {
-            MoveToEx(hdc, r.left, r.top, nullptr);
-            LineTo(hdc, r.right, r.top);
-        }
-        if(HasSide(border.sides, BorderSide::Bottom)) {
-            MoveToEx(hdc, r.left, r.bottom - border.thickness, nullptr);
-            LineTo(hdc, r.right, r.bottom - border.thickness);
-        }
-        if(HasSide(border.sides, BorderSide::Left)) {
-            MoveToEx(hdc, r.left, r.top, nullptr);
-            LineTo(hdc, r.left, r.bottom);
-        }
-        if(HasSide(border.sides, BorderSide::Right)) {
-            MoveToEx(hdc, r.right - border.thickness, r.top, nullptr);
-            LineTo(hdc, r.right - border.thickness, r.bottom);
-        }
-    }
-
     // Render children in order
     for(auto &c : children) {
         if(c) c->InitRender(hdc);
@@ -139,7 +100,6 @@ bool Container::FeedMouseEvent(const MouseEvent& e) {
             break;
         }
     }
-
 
     // Container itself, or always root
     if(!handled || this == root) {

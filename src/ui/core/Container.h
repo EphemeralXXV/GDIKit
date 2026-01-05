@@ -6,7 +6,6 @@
 #include "Widget.h"
 #include "Layout.h"
 #include "Color.h"
-#include "Border.h"
 
 class Container : public Widget {
     public:
@@ -29,13 +28,6 @@ class Container : public Widget {
         // --- Display & Visibility ---
         void UpdateEffectiveDisplay() override;
 
-        // Appearance
-        void SetBackgroundColor(const Color& newColor) { backgroundColor = newColor; }
-        Color GetBackgroundColor() const { return backgroundColor; }
-
-        void SetBorder(const Color& color, int thickness = 1, BorderSide sides = BorderSide::All);
-        Border GetBorder() const { return border; }
-
         // Rendering
         void Render(HDC hdc) override;
 
@@ -44,6 +36,4 @@ class Container : public Widget {
     protected:
         std::vector<WidgetPtr> children;
         std::unique_ptr<Layout> layout;
-        Color backgroundColor;
-        Border border;
     };

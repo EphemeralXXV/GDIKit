@@ -4,6 +4,9 @@
 #include <functional>
 #include <windows.h>
 
+#include "Color.h"
+#include "Border.h"
+
 enum class MouseEventType { Enter, Leave, Move, Down, Up, Click };
 enum class MouseButton { None = 0, Left = 1, Right = 2 };
 struct MouseEvent {
@@ -88,6 +91,13 @@ class Widget {
         void SetMouseEventsIgnoring(bool ignore) { ignoreMouseEvents = ignore; }
         bool IsIgnoringMouseEvents() { return ignoreMouseEvents; }
 
+        // --- Appearance ---
+        Color GetBackgroundColor() const { return backgroundColor; }
+        void SetBackgroundColor(const Color& newColor) { backgroundColor = newColor; }
+
+        Border GetBorder() const { return border; }
+        void SetBorder(const Color& color, int thickness = 1, BorderSide sides = BorderSide::All);        
+
         // --- Rendering ---
         virtual void InitRender(HDC hdc) final; // Pre-render logic (condition checks, etc.) - template method
 
@@ -137,6 +147,13 @@ class Widget {
         virtual void OnDisplayChanged(bool displayed) { if(!displayed) ResetTransientStates(); };
         virtual void OnVisibilityChanged(bool visible) { if(!visible) ResetTransientStates(); };
         virtual void ResetTransientStates();
+
+        // --- Appearance ---
+        Border border;
+        void RenderBorder(HDC hdc);
+        
+        Color backgroundColor;
+        void RenderBackground(HDC hdc);
 
         // --- Rendering ---
         virtual void Render(HDC hdc) {}; // Actual render logic

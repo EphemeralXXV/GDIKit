@@ -30,21 +30,20 @@ void SelectItem::Render(HDC hdc) {
     RECT r = AbsRect();
 
     // Background
-    COLORREF brushColor;
+    Color bgColor;
     if(pressed) {
-        brushColor = pressedColor.toCOLORREF();
+        bgColor = pressedColor;
     }
     else if(hovered) {
-        brushColor = hoverColor.toCOLORREF();
+        bgColor = hoverColor;
     }
     else if(selected) {
-        brushColor = selectedColor.toCOLORREF();
+        bgColor = selectedColor;
     }
     else {
-        brushColor = backColor.toCOLORREF();
+        bgColor = backColor;
     }
-    ScopedBrush br(hdc, brushColor);
-    FillRect(hdc, &r, br.get());
+    SetBackgroundColor(bgColor);
 
     // Text
     SetBkMode(hdc, TRANSPARENT);

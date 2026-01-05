@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include "Widget.h"
+#include "ScopedGDI.h"
 
 // Constructor
 Widget::Widget() :
@@ -10,7 +11,8 @@ Widget::Widget() :
     displayed(true), effectiveDisplayed(true),
     visible(true), enabled(true), hovered(false),
     pressed(false), mouseDownInside(false),
-    ignoreMouseEvents(false), clipChildren(false)
+    ignoreMouseEvents(false), clipChildren(false),
+    backgroundColor(Color::FromARGB(0, 0, 0, 0))
 {}
 
 // Ancestors
@@ -231,13 +233,54 @@ bool Widget::OnMouseUp(POINT p) {
     return handled;
 }
 
+// --- Appearance -----------------------------------------------------
+void Widget::SetBorder(const Color& color, int thickness, BorderSide sides) {
+    border.color = color;
+    border.thickness = thickness;
+    border.sides = sides;
+}
+
+void Widget::RenderBorder(HDC hdc) {
+    if(border.thickness > 0) {
+        ScopedPen pen(hdc, PS_SOLID, border.thickness, border.color.toCOLORREF());
+        RECT r = AbsRect();
+
+        if(HasSide(border.sides, BorderSide::Top)) {
+            MoveToEx(hdc, r.left, r.top, nullptr);
+            LineTo(hdc, r.right, r.top);
+        }
+        if(HasSide(border.sides, BorderSide::Bottom)) {
+            MoveToEx(hdc, r.left, r.bottom - border.thickness, nullptr);
+            LineTo(hdc, r.right, r.bottom - border.thickness);
+        }
+        if(HasSide(border.sides, BorderSide::Left)) {
+            MoveToEx(hdc, r.left, r.top, nullptr);
+            LineTo(hdc, r.left, r.bottom);
+        }
+        if(HasSide(border.sides, BorderSide::Right)) {
+            MoveToEx(hdc, r.right - border.thickness, r.top, nullptr);
+            LineTo(hdc, r.right - border.thickness, r.bottom);
+        }
+    }
+}
+
+void Widget::RenderBackground(HDC hdc) {
+    if(backgroundColor.a > 0) { // only draw if non-transparent
+        ScopedBrush br(hdc, backgroundColor.toCOLORREF());
+        RECT r = AbsRect();
+        FillRect(hdc, &r, br.get());
+    }
+}
+
 // --- Rendering ------------------------------------------------------
 void Widget::InitRender(HDC hdc) {
     if(!effectiveDisplayed || !visible) return;
     
     // Render must not call SaveDC/RestoreDC again - it's taken care of here
     int saved = SaveDC(hdc);
+    RenderBackground(hdc);
     Render(hdc);
+    RenderBorder(hdc);
     RestoreDC(hdc, saved);
 }
 
