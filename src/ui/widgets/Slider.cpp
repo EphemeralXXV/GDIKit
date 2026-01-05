@@ -4,6 +4,7 @@
 
 #include "Slider.h"
 #include "Color.h"
+#include "ScopedGDI.h"
 
 // --- Slider ------------------------------------------------------------
 Slider::Slider(
@@ -86,11 +87,10 @@ int Slider::ComputeLabelHeight(HDC hdc) {
         return 0;
     }
     int labelHeight = 0;
-    HFONT oldFont = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedSelectFont oldFont(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
     labelHeight = tm.tmHeight + 2; // 2px padding
-    SelectObject(hdc, oldFont);
 
     return labelHeight;
 }
@@ -102,9 +102,8 @@ void Slider::DrawTrack(HDC hdc) {
         AbsX() + width,
         AbsY() + sliderOffsetY + handleHeight/2 + 2
     };
-    HBRUSH br = CreateSolidBrush(trackColor.toCOLORREF());
-    FillRect(hdc, &track, br);
-    DeleteObject(br);
+    ScopedBrush br(hdc, trackColor.toCOLORREF());
+    FillRect(hdc, &track, br.get());
 }
 
 void Slider::DrawHandle(HDC hdc) {
@@ -118,15 +117,14 @@ void Slider::DrawHandle(HDC hdc) {
     if(isDragging) { // Dragging takes precendence over hovering
         handleCol = dragColor;
     }
-    HBRUSH br = CreateSolidBrush(handleCol.toCOLORREF());
-    FillRect(hdc, &hr, br);
-    DeleteObject(br);
+    ScopedBrush br(hdc, handleCol.toCOLORREF());
+    FillRect(hdc, &hr, br.get());
 }
 
 void Slider::DrawLabels(HDC hdc) {
     if(!(showLabel || showValue)) return;
 
-    HFONT oldFont = (HFONT)SelectObject(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedSelectFont oldFont(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     RECT textRect = { AbsX(), AbsY(), AbsX() + width, AbsY() + sliderOffsetY};
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, labelColor.toCOLORREF());
@@ -141,7 +139,6 @@ void Slider::DrawLabels(HDC hdc) {
         std::wstring val = std::to_wstring((int)value);
         DrawTextW(hdc, val.c_str(), -1, &textRect, DT_RIGHT | DT_SINGLELINE | DT_VCENTER);
     }
-    SelectObject(hdc, oldFont);
 }
 
 void Slider::Render(HDC hdc) {

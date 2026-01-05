@@ -1,5 +1,6 @@
 #include "SelectItem.h"
 #include "Color.h"
+#include "ScopedGDI.h"
 
 SelectItem::SelectItem(std::wstring t, size_t idx) :
     text(t),
@@ -29,27 +30,26 @@ void SelectItem::Render(HDC hdc) {
     RECT r = AbsRect();
 
     // Background
-    HBRUSH br;
-    
+    COLORREF brushColor;
     if(pressed) {
-        br = CreateSolidBrush(pressedColor.toCOLORREF());
+        brushColor = pressedColor.toCOLORREF();
     }
     else if(hovered) {
-        br = CreateSolidBrush(hoverColor.toCOLORREF());
+        brushColor = hoverColor.toCOLORREF();
     }
     else if(selected) {
-        br = CreateSolidBrush(selectedColor.toCOLORREF());
+        brushColor = selectedColor.toCOLORREF();
     }
     else {
-        br = CreateSolidBrush(backColor.toCOLORREF());
+        brushColor = backColor.toCOLORREF();
     }
-    FillRect(hdc, &r, br);
-    DeleteObject(br);
+    ScopedBrush br(hdc, brushColor);
+    FillRect(hdc, &r, br.get());
 
     // Text
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    HFONT oldFont = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedSelectFont oldFont(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
     DrawTextW(
         hdc,
@@ -58,6 +58,4 @@ void SelectItem::Render(HDC hdc) {
         &r,
         DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS
     );
-
-    SelectObject(hdc, oldFont);
 }

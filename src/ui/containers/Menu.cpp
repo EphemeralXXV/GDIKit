@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include "VerticalLayout.h"
+#include "ScopedGDI.h"
 
 Menu::Menu(const std::wstring &t) :
     isCollapsed(false),
@@ -16,53 +17,6 @@ Menu::Menu(const std::wstring &t) :
     InitHeader();
     InitBody();
     SetLayout(std::make_unique<VerticalLayout>());
-    // AddMouseListener([this](const MouseEvent& e) {
-    //     POINT p = e.pos;
-
-    //     switch(e.type) {
-    //         case MouseEventType::Move:
-    //             if(isDragging) {
-    //                 SetPos(p.x - dragOffset.x, p.y - dragOffset.y);
-    //             }
-    //             if(isResizing) {
-    //                 int newWidth = p.x - AbsX() + resizeOffset.x;
-    //                 if(newWidth < 0) break; // Negative size is invalid; don't bother continuing
-
-    //                 int newHeight = p.y - AbsY() + resizeOffset.y;
-    //                 if(newHeight < 0) break;
-
-    //                 SetSize(newWidth, newHeight);
-    //             }
-    //             break;
-
-    //         case MouseEventType::Down: {
-    //             // Resize handle
-    //             RECT resizeHandleAbsRect = ResizeHandleRect();
-    //             if(PtInRect(&resizeHandleAbsRect, p)) {
-    //                 isResizing = true;
-    //                 resizeOffset.x = AbsRight() - p.x;
-    //                 resizeOffset.y = AbsBottom() - p.y;
-    //                 return;
-    //             }
-    //             // Title bar drag -- navigation buttons take precedence!
-    //             if(headerContainer->MouseInRect(p) &&
-    //                 !collapseButton->MouseInRect(p) &&
-    //                 !closeButton->MouseInRect(p)
-    //             ) {
-    //                 isDragging = true;
-    //                 dragOffset.x = p.x - AbsX();
-    //                 dragOffset.y = p.y - AbsY();
-    //                 return;
-    //             }
-    //             break;
-    //         }
-            
-    //         case MouseEventType::Up:
-    //             isDragging = false;
-    //             isResizing = false;
-    //             break;
-    //     }
-    // });
 }
 
 // Resize handle in the bottom-right of the menu
@@ -79,8 +33,7 @@ void Menu::RenderResizeHandle(HDC hdc) const { // Classic triangle-like diagonal
     const int spacing = 3;
     const int cornerPadding = 2; // Distance from the corner
 
-    HPEN pen = CreatePen(PS_SOLID, 1, RGB(180,180,180));
-    HPEN oldPen = (HPEN)SelectObject(hdc, pen);
+    ScopedPen pen(hdc, PS_SOLID, 1, RGB(180,180,180));
 
     // RECT for the diagonal lines (going from top-left to bottom-right)
     // Subtract cornerPadding only in y1 and x1 so as to preserve the hitbox
@@ -102,9 +55,6 @@ void Menu::RenderResizeHandle(HDC hdc) const { // Classic triangle-like diagonal
         MoveToEx(hdc, startX, startY - 1, nullptr);
         LineTo(hdc, endX, endY - 1);
     }
-
-    SelectObject(hdc, oldPen);
-    DeleteObject(pen);
 }
 
 // --- Subcontainer initialization --------------------------------------------------

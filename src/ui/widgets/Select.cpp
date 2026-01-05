@@ -4,6 +4,8 @@
 #include "Root.h"
 #include "Color.h"
 #include "VerticalLayout.h"
+#include "ScopedGDI.h"
+
 Select::Select(std::vector<SelectItemPtr> its) :
     items(std::move(its)),
     selectedIndex(its.empty() ? -1 : 0),
@@ -154,37 +156,31 @@ void Select::Render(HDC hdc) {
     RECT r = AbsRect();
 
     // --- Background ------------------------------------------------------
-    HBRUSH br;
+    COLORREF brushColor;
     if(!enabled) {
-        br = CreateSolidBrush(RGB(120,120,120));
+        brushColor = RGB(120,120,120);
     }
     else if(pressed) {
-        br = CreateSolidBrush(pressedColor.toCOLORREF());
+        brushColor = pressedColor.toCOLORREF();
     }
     else if(hovered) {
-        br = CreateSolidBrush(hoverColor.toCOLORREF());
+        brushColor = hoverColor.toCOLORREF();
     }
     else {
-        br = CreateSolidBrush(backColor.toCOLORREF());
+        brushColor = backColor.toCOLORREF();
     }
-    FillRect(hdc, &r, br);
-    DeleteObject(br);
+    ScopedBrush br(hdc, brushColor);
+    FillRect(hdc, &r, br.get());
 
     // --- Border ----------------------------------------------------------
-    HPEN pen = CreatePen(PS_SOLID, 1, borderColor.toCOLORREF());
-    HPEN oldPen = (HPEN)SelectObject(hdc, pen);
-    HBRUSH oldBrush = (HBRUSH)SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    ScopedPen pen(hdc, PS_SOLID, 1, borderColor.toCOLORREF());
+    ScopedSelectBrush oldBrush(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
     Rectangle(hdc, r.left, r.top, r.right, r.bottom);
-    SelectObject(hdc, oldBrush);
-    SelectObject(hdc, oldPen);
-    DeleteObject(pen);
 
     // --- Text ------------------------------------------------------------
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    HFONT oldFont = (HFONT)SelectObject(
-        hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT)
-    );
+    ScopedSelectFont oldFont(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
     RECT textRect = r;
     textRect.right -= 16; // leave space for arrow
@@ -211,8 +207,6 @@ void Select::Render(HDC hdc) {
         &arrowRect,
         DT_SINGLELINE | DT_VCENTER | DT_CENTER
     );
-
-    SelectObject(hdc, oldFont);
 }
 
 void Select::ResetTransientStates() {

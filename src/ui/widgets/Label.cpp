@@ -2,6 +2,7 @@
 
 #include "Label.h"
 #include "Color.h"
+#include "ScopedGDI.h"
 
 Label::Label(std::wstring t) : 
     text(t),
@@ -12,9 +13,8 @@ Label::Label(std::wstring t) :
 // Compute text geometry from its contents
 RECT Label::ComputeRect(HDC hdc) {
     SIZE size;
-    HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     GetTextExtentPoint32W(hdc, text.c_str(), (int)text.size(), &size);
-    SelectObject(hdc, old);
     return RECT{AbsX(), AbsY(), AbsX() + size.cx, AbsY() + size.cy};
 } 
 
@@ -32,9 +32,7 @@ void Label::Render(HDC hdc) {
 
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
     DrawTextW(hdc, text.c_str(), (int)text.size(), &setRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
-
-    SelectObject(hdc, old);
 }

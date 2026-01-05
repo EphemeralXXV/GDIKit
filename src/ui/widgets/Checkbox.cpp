@@ -1,6 +1,7 @@
 #include <string>
 
 #include "Checkbox.h"
+#include "ScopedGDI.h"
 #include "Color.h"
 
 Checkbox::Checkbox(std::wstring label) :
@@ -30,26 +31,23 @@ void Checkbox::Render(HDC hdc) {
     int boxSize = height; // square box same height as widget
 
     // Draw box background
-    HBRUSH br = CreateSolidBrush(hovered ? hoverColor.toCOLORREF() : boxColor.toCOLORREF());
+    ScopedBrush br(hdc, hovered ? hoverColor.toCOLORREF() : boxColor.toCOLORREF());
     RECT checkboxRect = RECT{r.left, r.top, r.left + boxSize, r.top + boxSize};
-    FillRect(hdc, &checkboxRect, br);
-    DeleteObject(br);
+    FillRect(hdc, &checkboxRect, br.get());
 
     // Draw checkmark if checked
     if(checked) {
-        HBRUSH checkBr = CreateSolidBrush(checkColor.toCOLORREF());
+        ScopedBrush checkBr(hdc, checkColor.toCOLORREF());
         RECT checkRect = {r.left + 4, r.top + 4, r.left + boxSize - 4, r.top + boxSize - 4};
-        FillRect(hdc, &checkRect, checkBr);
-        DeleteObject(checkBr);
+        FillRect(hdc, &checkRect, checkBr.get());
     }
 
     // Draw label text
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    HFONT old = (HFONT)SelectObject(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedSelectFont selFont(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     RECT textRect = { r.left + boxSize + 4, r.top, r.right, r.bottom };
     DrawTextW(hdc, text.c_str(), (int)text.size(), &textRect, DT_SINGLELINE | DT_VCENTER | DT_LEFT);
-    SelectObject(hdc, old);
 }
 
 void Checkbox::SetOnToggle(std::function<void(bool)> cb) {

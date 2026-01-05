@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include "Container.h"
+#include "ScopedGDI.h"
 
 Container::Container() :
     backgroundColor(Color::FromARGB(0, 0, 0, 0))
@@ -79,16 +80,14 @@ void Container::SetBorder(const Color& color, int thickness, BorderSide sides) {
 void Container::Render(HDC hdc) {
     // Background
     if(backgroundColor.a > 0) { // only draw if non-transparent
-        HBRUSH br = CreateSolidBrush(backgroundColor.toCOLORREF());
+        ScopedBrush br(hdc, backgroundColor.toCOLORREF());
         RECT r = AbsRect();
-        FillRect(hdc, &r, br);
-        DeleteObject(br);
+        FillRect(hdc, &r, br.get());
     }
 
     // Border
     if(border.thickness > 0) {
-        HPEN pen = CreatePen(PS_SOLID, border.thickness, border.color.toCOLORREF());
-        HPEN oldPen = (HPEN)SelectObject(hdc, pen);
+        ScopedPen pen(hdc, PS_SOLID, border.thickness, border.color.toCOLORREF());
         RECT r = AbsRect();
 
         if(HasSide(border.sides, BorderSide::Top)) {
@@ -107,9 +106,6 @@ void Container::Render(HDC hdc) {
             MoveToEx(hdc, r.right - border.thickness, r.top, nullptr);
             LineTo(hdc, r.right - border.thickness, r.bottom);
         }
-
-        SelectObject(hdc, oldPen);
-        DeleteObject(pen);
     }
 
     // Render children in order
