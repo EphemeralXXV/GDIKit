@@ -4,7 +4,7 @@
 #include "Root.h"
 #include "Color.h"
 #include "Border.h"
-#include "VerticalLayout.h"
+#include "FlexLayout.h"
 #include "ScopedGDI.h"
 
 Select::Select(std::vector<SelectItemPtr> its) :
@@ -19,7 +19,8 @@ Select::Select(std::vector<SelectItemPtr> its) :
     borderColor(Color::FromRGB(20, 20, 20)),
     textColor(Color::FromRGB(255, 255, 255))
 {
-    SetBorder(borderColor, 1, BorderSide::All);
+    SetBorder(1, borderColor, BorderSide::All);
+    SetPadding(4, 0); // Add some horizontal padding so that the text doesn't touch the border
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
             if(open) {
@@ -75,8 +76,10 @@ void Select::InitPopup() {
     popup = std::make_shared<Container>();
     
     popup->SetBackgroundColor(Color::FromARGB(230, 30, 30, 30));
-    popup->SetBorder(borderColor, 1);
-    popup->SetLayout(std::make_unique<VerticalLayout>(0));
+    popup->SetBorder(1, borderColor, BorderSide::All);
+    auto popupLayout = std::make_unique<VerticalLayout>(0);
+    popupLayout->SetAlign(AlignItems::Stretch); // Stretch items to fill the popup width
+    popup->SetLayout(std::move(popupLayout));
 
     // Mark initial selection
     if(selectedIndex >= 0 && selectedIndex < (int)items.size()) {
@@ -85,7 +88,7 @@ void Select::InitPopup() {
     
     for(size_t i = 0; i < items.size(); ++i) {
         SelectItemPtr& it = items[i];
-        it->SetSize(width, itemHeight);
+        it->SetSize(0, itemHeight);
 
         it->SetOnSelect([this, it, i](int) {
             SetSelectedIndex((int)i);
@@ -105,8 +108,9 @@ void Select::Open() {
     std::shared_ptr<Root> root = Root::Get();
 
     // Dynamic position/size recalculation (Select might change geometry after creation)
-    RECT r = AbsRect();
-    popup->SetPosSize(r.left, r.bottom, r.right - r.left, PopupHeight());
+    RECT r = EffectiveRect();
+    popup->SetPosSize(r.left, r.bottom, r.right - r.left, 0);
+    popup->SetAutoHeight(true);
     root->AddChild(popup);
 
     // Add listener to root, because popup should close when clicking anywhere outside itself
@@ -155,8 +159,6 @@ void Select::Render(HDC hdc) {
         Open();
     }
 
-    RECT r = AbsRect();
-
     // --- Background ------------------------------------------------------
     Color bgColor;
     if(!enabled) {
@@ -173,12 +175,14 @@ void Select::Render(HDC hdc) {
     }
     SetBackgroundColor(bgColor);
 
+    RECT innerRect = ComputeInnerRect();
+
     // --- Text ------------------------------------------------------------
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
     ScopedSelectFont oldFont(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
-    RECT textRect = r;
+    RECT textRect = innerRect;
     textRect.right -= 16; // leave space for arrow
 
     SelectItemPtr selectedItem = GetSelectedItem();
@@ -190,11 +194,12 @@ void Select::Render(HDC hdc) {
             &textRect,
             DT_SINGLELINE | DT_VCENTER | DT_LEFT
         );
+
     }
 
     // --- Arrow -----------------------------------------------------------
-    RECT arrowRect = r;
-    arrowRect.left = r.right - 16;
+    RECT arrowRect = innerRect;
+    arrowRect.left = innerRect.right - 16;
 
     DrawTextW(
         hdc,

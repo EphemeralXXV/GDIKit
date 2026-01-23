@@ -52,33 +52,69 @@ RECT Widget::AbsRect() const {
     return RECT{ absX, absY, absX + width, absY + height};
 }
 
+// Effective coordinate getters
+int Widget::EffectiveX() const {
+    return effectiveRect.left;
+}
+int Widget::EffectiveY() const {
+    return effectiveRect.top;
+}
+int Widget::EffectiveRight() const {
+    return effectiveRect.right;
+}
+int Widget::EffectiveBottom() const {
+    return effectiveRect.bottom;
+}
+RECT Widget::EffectiveRect() const {
+    return effectiveRect;
+}
+int Widget::EffectiveWidth() const {
+    return effectiveRect.right - effectiveRect.left;
+}
+int Widget::EffectiveHeight() const {
+    return effectiveRect.bottom - effectiveRect.top;
+}
+
 // Size setters
 void Widget::SetRect(int l, int t, int r, int b) {
     // Sets the relative rect
     rect = {l, t, r, b};
     UpdateConvenienceGeometry();
-    UpdateInternalLayout();
+    InvalidateLayout();
 }
 void Widget::SetPos(int x, int y) {
     int w = rect.right - rect.left;
     int h = rect.bottom - rect.top;
     rect = {x, y, x + w, y + h};
     UpdateConvenienceGeometry();
+    UpdateEffectiveGeometry();  // Don't invalidate - no need for relayout
+                                // just update effective geometry of the subtree
 }
 void Widget::SetSize(int w, int h) {
     rect = {rect.left, rect.top, rect.left + w, rect.top + h};
     UpdateConvenienceGeometry();
-    UpdateInternalLayout();
+    InvalidateLayout();
 }
 void Widget::SetPosSize(int x, int y, int w, int h) {
     rect = { x, y, x + w, y + h };
     UpdateConvenienceGeometry();
-    UpdateInternalLayout();
+    InvalidateLayout();
 }
 void Widget::SetPreferredSize(int w, int h) {
     preferredWidth = w;
     preferredHeight = h;
-    UpdateInternalLayout();
+    InvalidateLayout();
+}
+
+RECT Widget::ComputeInnerRect() const {
+    RECT r = EffectiveRect();
+
+    r.top    += (padding.top + border.top.thickness);
+    r.bottom -= (padding.bottom + border.bottom.thickness);
+    r.left   += (padding.left + border.left.thickness);
+    r.right  -= (padding.right + border.right.thickness);
+
+    return r;
 }
 
 // Helper functions reacting to geometry changes
@@ -89,11 +125,58 @@ void Widget::UpdateConvenienceGeometry() {
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
 }
+void Widget::ApplyLogicalGeometry() {
+    RECT parentInnerRect;
+    if(parent) {
+        parentInnerRect = parent->ComputeInnerRect(); // derive from parent if present
+    }
+    else {
+        parentInnerRect = {0, 0, 0, 0}; // root or parentless widget
+    }
+
+    // Start from logical position
+    int ex = x + margin.left;
+    int ey = y + margin.top;
+    int ew = width - margin.left - margin.right;
+    int eh = height - margin.top - margin.bottom;
+
+    // Apply alignment/padding inside parent inner rect
+    ex += parentInnerRect.left;
+    ey += parentInnerRect.top;
+
+    // Negative dimensions safeguard
+    ew = std::max(0, ew);
+    eh = std::max(0, eh);
+
+    SetEffectiveRect(ex, ey, ex + ew, ey + eh);
+}
+void Widget::SetEffectiveRect(int l, int t, int r, int b) {
+    effectiveRect = {l, t, r, b};
+}
+void Widget::InvalidateLayout() {
+    if(auto* p = GetParent()) {
+        if(p->GetLayout()) {
+            // Start reflow at parent if current Container is a layout item
+            p->InvalidateLayout();
+            return;
+        }
+    }
+    ApplyLogicalGeometry();
+    UpdateInternalLayout();
+}
 void Widget::UpdateInternalLayout() {
     // Updates automatic layouts on geometry changes
     // default: no-op. Derived widgets may override to update children elements.
 }
 void Widget::OnInternalLayoutUpdated() {}
+void Widget::UpdateEffectiveGeometry() {
+    if(auto* p = GetParent()) {
+        if(p->GetLayout()) {
+            return; // Let parent apply geometry with its layout
+        }
+    }
+    ApplyLogicalGeometry();
+}
 
 // Get final internal geometry computed from preferred size
 int Widget::GetLayoutWidth() const {
@@ -101,6 +184,48 @@ int Widget::GetLayoutWidth() const {
 }
 int Widget::GetLayoutHeight() const {
     return preferredHeight > 0 ? preferredHeight : height;
+}
+
+// Spacing & Alignment
+void Widget::SetPadding(int all) {
+    padding = {all, all, all, all};
+    // No InvalidateLayout -- padding doesn't alter effective geometry
+}
+void Widget::SetPadding(int horizontal, int vertical) {
+    padding = {vertical, vertical, horizontal, horizontal};
+}
+void Widget::SetPadding(int top, int bottom, int left, int right) {
+    padding = {top, bottom, left, right};
+}
+
+void Widget::SetMargin(int all) {
+    margin = {all, all, all, all};
+    InvalidateLayout();
+}
+void Widget::SetMargin(int horizontal, int vertical) {
+    margin = {vertical, vertical, horizontal, horizontal};
+    InvalidateLayout();
+}
+void Widget::SetMargin(int top, int bottom, int left, int right) {
+    margin = {top, bottom, left, right};
+    InvalidateLayout();
+}
+
+void Widget::SetWidthProperties(DimensionProperties properties) {
+    widthProperties = properties;
+    InvalidateLayout();
+}
+void Widget::SetHeightProperties(DimensionProperties properties) {
+    heightProperties = properties;
+    InvalidateLayout();
+}
+void Widget::SetAutoWidth(bool isAuto) {
+    widthProperties.isAuto = isAuto;
+    InvalidateLayout();
+}
+void Widget::SetAutoHeight(bool isAuto) {
+    heightProperties.isAuto = isAuto;
+    InvalidateLayout();
 }
 
 // --- Display & Visibility --------------------------------------------
@@ -130,13 +255,13 @@ void Widget::SetVisible(bool visible)  {
 // --- Mouse event handlers -------------------------------------------
 // Test if cursor currently over widget
 bool Widget::MouseInRect(POINT p) const {
-    RECT clip = AbsRect();
+    RECT clip = EffectiveRect();
 
     // Calculate true hit area if clipped by any of the ancestors
     const Widget* ancestor = parent;
     while(ancestor) {
         if(ancestor->clipChildren) {
-            RECT parentRect = ancestor->AbsRect();
+            RECT parentRect = ancestor->EffectiveRect();
             IntersectRect(&clip, &clip, &parentRect);
         }
         ancestor = ancestor->parent;
@@ -234,40 +359,49 @@ bool Widget::OnMouseUp(POINT p) {
 }
 
 // --- Appearance -----------------------------------------------------
-void Widget::SetBorder(const Color& color, int thickness, BorderSide sides) {
-    border.color = color;
-    border.thickness = thickness;
-    border.sides = sides;
+void Widget::SetBorder(int thickness, const Color& color, BorderSide sides) {
+    if(HasSide(sides, BorderSide::Top))    border.top    = {thickness, color};
+    if(HasSide(sides, BorderSide::Right))  border.right  = {thickness, color};
+    if(HasSide(sides, BorderSide::Bottom)) border.bottom = {thickness, color};
+    if(HasSide(sides, BorderSide::Left))   border.left   = {thickness, color};
+}
+
+void Widget::DrawBorderEdge(HDC hdc, BorderData borderData, BorderSide side) {
+    if(borderData.thickness <= 0) return;
+
+    RECT r = EffectiveRect();
+
+    // Use precise rects instead of imprecise lines (LineTo)
+    RECT br = r;
+    switch(side) {
+        case BorderSide::Top:
+            br.bottom = br.top + borderData.thickness;
+            break;
+        case BorderSide::Bottom:
+            br.top = br.bottom - borderData.thickness;
+            break;
+        case BorderSide::Left:
+            br.right = br.left + borderData.thickness;
+            break;
+        case BorderSide::Right:
+            br.left = br.right - borderData.thickness;
+            break;
+    }
+    ScopedBrush brush(hdc, borderData.color.toCOLORREF());
+    FillRect(hdc, &br, brush.get());
 }
 
 void Widget::RenderBorder(HDC hdc) {
-    if(border.thickness > 0) {
-        ScopedPen pen(hdc, PS_SOLID, border.thickness, border.color.toCOLORREF());
-        RECT r = AbsRect();
-
-        if(HasSide(border.sides, BorderSide::Top)) {
-            MoveToEx(hdc, r.left, r.top, nullptr);
-            LineTo(hdc, r.right, r.top);
-        }
-        if(HasSide(border.sides, BorderSide::Bottom)) {
-            MoveToEx(hdc, r.left, r.bottom - border.thickness, nullptr);
-            LineTo(hdc, r.right, r.bottom - border.thickness);
-        }
-        if(HasSide(border.sides, BorderSide::Left)) {
-            MoveToEx(hdc, r.left, r.top, nullptr);
-            LineTo(hdc, r.left, r.bottom);
-        }
-        if(HasSide(border.sides, BorderSide::Right)) {
-            MoveToEx(hdc, r.right - border.thickness, r.top, nullptr);
-            LineTo(hdc, r.right - border.thickness, r.bottom);
-        }
-    }
+    DrawBorderEdge(hdc, border.top, BorderSide::Top);
+    DrawBorderEdge(hdc, border.bottom, BorderSide::Bottom);
+    DrawBorderEdge(hdc, border.left, BorderSide::Left);
+    DrawBorderEdge(hdc, border.right, BorderSide::Right);
 }
 
 void Widget::RenderBackground(HDC hdc) {
     if(backgroundColor.a > 0) { // only draw if non-transparent
         ScopedBrush br(hdc, backgroundColor.toCOLORREF());
-        RECT r = AbsRect();
+        RECT r = EffectiveRect();
         FillRect(hdc, &r, br.get());
     }
 }

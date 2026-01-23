@@ -24,7 +24,6 @@ class Menu : public Container {
         void SetCollapsed(bool collapsed);
 
         // Override defaults to update layout
-        void OnInternalLayoutUpdated() override;
         void SetSize(int w, int h);
         void SetPosSize(int x, int y, int w, int h);
 
@@ -32,13 +31,24 @@ class Menu : public Container {
         std::wstring GetTitle() const { return title; }
         void SetShowTitleBar(bool show);
 
+        // Delegate to body, which is the only mutable part of the menu (for now)
         void SetBodyLayout(std::unique_ptr<Layout> newLayout) {
-            // Delegate to body, which is the only mutable part of the menu (for now)
             if(!bodyContainer) return;
             bodyContainer->SetLayout(std::move(newLayout));
         }
+        void SetBodyPadding(int all) {
+            if(!bodyContainer) return;
+            bodyContainer->SetPadding(all);
+        }
+        void SetBodyPadding(int horizontal, int vertical) {
+            if(!bodyContainer) return;
+            bodyContainer->SetPadding(vertical, horizontal);
+        }
+        void SetBodyPadding(int top, int bottom, int left, int right) {
+            if(!bodyContainer) return;
+            bodyContainer->SetPadding(top, bottom, left, right);
+}
         void SetBodyBackgroundColor(const Color &color) {
-            // Delegate to body, which is the only mutable part of the menu (for now)
             if(!bodyContainer) return;
             bodyContainer->SetBackgroundColor(color);
         }

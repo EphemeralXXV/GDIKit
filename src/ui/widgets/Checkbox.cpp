@@ -27,8 +27,8 @@ void Checkbox::SetChecked(bool state) {
 }
 
 void Checkbox::Render(HDC hdc) {
-    RECT r = AbsRect();
-    int boxSize = height; // square box same height as widget
+    RECT r = EffectiveRect();
+    int boxSize = EffectiveHeight(); // square box same height as widget
 
     // Draw box background
     ScopedBrush br(hdc, hovered ? hoverColor.toCOLORREF() : boxColor.toCOLORREF());

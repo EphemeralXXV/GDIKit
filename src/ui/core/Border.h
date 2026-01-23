@@ -22,8 +22,14 @@ inline bool HasSide(BorderSide sides, BorderSide side) {
     return (static_cast<uint8_t>(sides) & static_cast<uint8_t>(side)) != 0;
 }
 
-struct Border {
+struct BorderData {
     int thickness = 0;
     Color color = Color::FromARGB(0,0,0,0);
-    BorderSide sides = BorderSide::All;
+};
+
+struct Border {
+    BorderData top;
+    BorderData right;
+    BorderData bottom;
+    BorderData left;
 };

@@ -15,7 +15,7 @@ Button::Button(std::wstring t) :
     borderColor(Color::FromRGB(0,0,0)),
     textColor(Color::FromRGB(255,255,255))
 {
-    SetBorder(borderColor, 1, BorderSide::All);
+    SetBorder(1, borderColor, BorderSide::All);
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
             if(onClick) onClick();
@@ -24,7 +24,7 @@ Button::Button(std::wstring t) :
 }
 
 void Button::Render(HDC hdc) {
-    RECT r = AbsRect();
+    RECT innerRect = ComputeInnerRect();
 
     // Background
     Color bgColor;
@@ -38,7 +38,7 @@ void Button::Render(HDC hdc) {
     SetBkMode(hdc, TRANSPARENT);
     ScopedSelectFont selFont(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    DrawTextW(hdc, text.c_str(), (int)text.size(), &r, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+    DrawTextW(hdc, text.c_str(), (int)text.size(), &innerRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 }
 
 void Button::SetOnClick(std::function<void()> cb) {

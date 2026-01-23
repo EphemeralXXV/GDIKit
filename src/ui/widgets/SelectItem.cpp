@@ -13,6 +13,7 @@ SelectItem::SelectItem(std::wstring t, size_t idx) :
     selectedColor(Color::FromRGB(50, 50, 50)),
     textColor(Color::FromRGB(255, 255, 255))
 {
+    SetPadding(4, 0); // Add some horizontal padding so that the text doesn't touch the border
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
             if(onSelect) {
@@ -27,7 +28,7 @@ void SelectItem::SetOnSelect(std::function<void(size_t)> cb) {
 }
 
 void SelectItem::Render(HDC hdc) {
-    RECT r = AbsRect();
+    RECT innerRect = ComputeInnerRect();
 
     // Background
     Color bgColor;
@@ -54,7 +55,7 @@ void SelectItem::Render(HDC hdc) {
         hdc,
         text.c_str(),
         -1,
-        &r,
+        &innerRect,
         DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS
     );
 }

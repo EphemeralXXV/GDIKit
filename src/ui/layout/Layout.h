@@ -1,5 +1,8 @@
 #pragma once
 
+#include <windows.h>
+#include "LayoutWidgetBridge.h"
+
 class Container; // forward
 
 class Layout {
@@ -9,7 +12,8 @@ class Layout {
         virtual ~Layout() {}
         // Apply the layout to the container: position children using child's SetPosSize / GetLayoutWidth / GetLayoutHeight
         // To be determined by a specific implementation of the interface
-        virtual void Apply() = 0;
+        // Callers must pass an inner RECT, which is essentially the container minus padding (true usable area)
+        virtual void Apply(const RECT& innerRect) = 0;
 
         virtual Container* GetContainer() const { return container; }
 
@@ -18,5 +22,13 @@ class Layout {
 
         virtual void SetContainer(Container* newContainer) {
             container = newContainer;
+        }
+
+        // Proxy methods for derived layouts to use the LayoutWidgetBridge
+        static void SetEffectiveRect(
+            Widget& child,
+            int l, int t, int r, int b
+        ) {
+            LayoutWidgetBridge::SetEffectiveRect(child, l, t, r, b);
         }
 };

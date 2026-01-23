@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <functional>
 #include <windows.h>
@@ -9,20 +10,34 @@
 
 enum class MouseEventType { Enter, Leave, Move, Down, Up, Click };
 enum class MouseButton { None = 0, Left = 1, Right = 2 };
+
 struct MouseEvent {
     MouseEventType type;
     POINT pos;  // relative to widget
     MouseButton button;
 };
+struct Spacing {
+    int top = 0;
+    int bottom = 0;
+    int left = 0;
+    int right = 0;
+};
+struct DimensionProperties {
+    bool isAuto = false;
+};
 
+class Layout;
 class Widget {
     public:
+        // Allow Layout access to select parts of Widget via a dedicated proxy
+        friend class LayoutWidgetBridge;
+
         // Constructor & destructor
         Widget();
         virtual ~Widget() {};
 
         // Ancestors
-        Widget* GetParent() const { return parent; }
+        virtual Widget* GetParent() const { return parent; }
         void SetParent(Widget* newParent);
         Widget* GetMainContainer() const; // Gets the topmost non-Root container
 
@@ -51,6 +66,7 @@ class Widget {
         int GetPreferredHeight() const { return preferredHeight; }
 
         RECT GetRect() const { return rect; }
+        RECT ComputeInnerRect() const; // Compute rect - padding - border
 
         // Absolute coordinate getters (relative => absolute)
         int AbsX() const;
@@ -58,6 +74,21 @@ class Widget {
         int AbsRight() const;
         int AbsBottom() const;
         RECT AbsRect() const;
+
+        // Effective coordinate getters
+        int EffectiveX() const;
+        int EffectiveY() const;
+        int EffectiveRight() const;
+        int EffectiveBottom() const;
+        RECT EffectiveRect() const;
+        int EffectiveWidth() const;
+        int EffectiveHeight() const;
+        
+        // Empty getter, because non-Container Widgets can't have children
+        // Ergo, they can't have layouts
+        // So Container must implement this method on its own
+        // As well as the setter and the field itself
+        virtual Layout* GetLayout() const { return nullptr; }
 
         // Get final internal geometry computed from preferred size
         int GetLayoutWidth() const;
@@ -69,9 +100,35 @@ class Widget {
         void SetSize(int w, int h);                     // Sets the size
         void SetPosSize(int x, int y, int w, int h);    // Sets the absolute position and size
 
-        // Updates automatic layouts on geometry changes
-        virtual void UpdateInternalLayout(); // INTERNAL USE ONLY!
-        virtual void OnInternalLayoutUpdated(); // optional callback
+        // Automatic geometry updates
+        virtual void InvalidateLayout(); // Recompute effective geometry on logical changes
+        virtual void UpdateInternalLayout(); // Propagate effective geometry recomputation
+        // Optional callback; DO NOT set logical geometry here - it'll create an infinite loop
+        virtual void OnInternalLayoutUpdated();
+        virtual void UpdateEffectiveGeometry(); // Updates effective geometry
+                                                // Virtual, because Container should override to propagate further
+
+        // Spacing and dynamic geometry properties
+        const Spacing& GetPadding() const { return padding; }
+        void SetPadding(int all);
+        void SetPadding(int horizontal, int vertical);
+        void SetPadding(int top, int bottom, int left, int right);
+        
+        const Spacing& GetMargin() const { return margin; }
+        void SetMargin(int all);
+        void SetMargin(int horizontal, int vertical);
+        void SetMargin(int top, int bottom, int left, int right);
+
+        DimensionProperties GetWidthProperties() const { return widthProperties; }
+        void SetWidthProperties(DimensionProperties properties);
+        DimensionProperties GetHeightProperties() const { return heightProperties; }
+        void SetHeightProperties(DimensionProperties properties);
+        bool IsAutoWidth() const { return widthProperties.isAuto; }
+        void SetAutoWidth(bool isAuto);
+        bool IsAutoHeight() const { return heightProperties.isAuto; }
+        void SetAutoHeight(bool isAuto);
+        bool IsFlexGrow() const { return isFlexGrow; }
+        void SetFlexGrow(bool flexGrow) { isFlexGrow = flexGrow; }
 
         // --- Display & Visibility -----------------------------------------
         virtual void UpdateEffectiveDisplay();  // Updates actual display state based on ancestors state
@@ -96,7 +153,7 @@ class Widget {
         void SetBackgroundColor(const Color& newColor) { backgroundColor = newColor; }
 
         Border GetBorder() const { return border; }
-        void SetBorder(const Color& color, int thickness = 1, BorderSide sides = BorderSide::All);        
+        void SetBorder(int thickness, const Color& color, BorderSide sides);        
 
         // --- Rendering ---
         virtual void InitRender(HDC hdc) final; // Pre-render logic (condition checks, etc.) - template method
@@ -105,8 +162,13 @@ class Widget {
         // Pointer to parent widget (container)
         Widget* parent;
 
-        // Bounding rectangle relative to parent
-        RECT rect;
+        // Bounding rectangles relative to parent
+        RECT rect;          // LOGICAL - as set by client code
+        RECT effectiveRect; // EFFECTIVE - as computed internally and rendered on the screen
+                            // (includes offsets, margins, padding, etc.)
+        void SetEffectiveRect(int l, int t, int r, int b);
+        // Compute and apply effective geometry from logical geometry + padding, margins, etc.
+        void ApplyLogicalGeometry(); 
 
         // Widget states
         bool displayed; // a'la CSS display
@@ -129,6 +191,13 @@ class Widget {
         // Helper functions reacting to geometry changes
         void UpdateConvenienceGeometry();       // Updates convenience geometry vars on internal geometry changes
 
+        // Spacing and dynamic geometry properties
+        Spacing padding;
+        Spacing margin;
+        DimensionProperties widthProperties;
+        DimensionProperties heightProperties;
+        bool isFlexGrow = false;
+
         // --- Mouse events  ------------------------------------------------
         std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
 
@@ -150,6 +219,7 @@ class Widget {
 
         // --- Appearance ---
         Border border;
+        void DrawBorderEdge(HDC hdc, BorderData borderData, BorderSide side);
         void RenderBorder(HDC hdc);
         
         Color backgroundColor;

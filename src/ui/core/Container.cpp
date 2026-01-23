@@ -10,7 +10,7 @@ void Container::AddChild(const WidgetPtr& child) {
     if(!child) return;
     child->SetParent(this);
     children.push_back(child);
-    UpdateInternalLayout();
+    InvalidateLayout();
 }
 
 void Container::RemoveChild(const WidgetPtr& child) {
@@ -24,7 +24,7 @@ void Container::RemoveChild(const WidgetPtr& child) {
         children.erase(it, children.end());
     }
     
-    UpdateInternalLayout();
+    InvalidateLayout();
 }
 
 void Container::RemoveAllChildren() {
@@ -32,14 +32,26 @@ void Container::RemoveAllChildren() {
         child->SetParent(nullptr);
     }
     children.clear();
-    UpdateInternalLayout();
+    InvalidateLayout();
+}
+
+RECT Container::ApplyChildMargin(const RECT& inner, const Widget& child) const {
+    const Spacing& m = child.GetMargin();
+
+    RECT r;
+    r.top    = inner.top    + m.top;
+    r.bottom = inner.bottom - m.bottom;
+    r.left   = inner.left   + m.left;
+    r.right  = inner.right  - m.right;
+
+    return r;
 }
 
 void Container::SetLayout(std::unique_ptr<Layout> newLayout) {
     if(!newLayout) return;
     layout = std::move(newLayout);
     layout->SetContainer(this);
-    UpdateInternalLayout();
+    InvalidateLayout();
 }
 
 void Container::UpdateInternalLayout() {
@@ -47,14 +59,37 @@ void Container::UpdateInternalLayout() {
     Widget::UpdateInternalLayout();
 
     // Apply layout policy if present
-    if(layout) layout->Apply();
+    if(layout) {
+        RECT inner = ComputeInnerRect();
+        layout->Apply(inner);
+        
+        for(auto& child : children) {
+            if(!child) continue;
 
-    // Call UpdateInternalLayout on children so nested containers propagate
-    for(auto& c : children) {
-        if(c) c->UpdateInternalLayout();
+            child->UpdateInternalLayout();
+        }
+    }
+    else {
+        // If no layout (absolute positioning), position the children manually
+        for(auto& child : children) {
+            if(!child) continue;
+
+            child->InvalidateLayout();
+        }
     }
     // Give derived classes a chance to react
     OnInternalLayoutUpdated();
+}
+void Container::UpdateEffectiveGeometry() {
+    Widget::UpdateEffectiveGeometry();
+    if(layout) {
+        RECT inner = ComputeInnerRect();
+        layout->Apply(inner);
+    }
+    for(auto& child : children) {
+        if(!child) continue; 
+        child->UpdateEffectiveGeometry();
+    }
 }
 
 void Container::UpdateEffectiveDisplay() {

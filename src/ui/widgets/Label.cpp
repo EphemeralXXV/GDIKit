@@ -21,7 +21,7 @@ RECT Label::ComputeRect(HDC hdc) {
 void Label::Render(HDC hdc) {
     // If there is not enough space, skip drawing
     RECT computedRect = ComputeRect(hdc);
-    RECT setRect = AbsRect();
+    RECT setRect = EffectiveRect();
     if(
         // Height
         (setRect.bottom - setRect.top) < (computedRect.bottom - computedRect.top)

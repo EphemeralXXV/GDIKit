@@ -40,8 +40,8 @@ Slider::Slider(
                 // Not using MouseInRect, because the Slider AbsRect...
                 // ...doesn't account for the label offset
                 RECT trackRect = HandleRect();
-                trackRect.left = AbsX();
-                trackRect.right = AbsX() + width;
+                trackRect.left = EffectiveX();
+                trackRect.right = EffectiveX() + width;
                 if(!PtInRect(&trackRect, e.pos)) {
                     break;
                 }
@@ -77,8 +77,8 @@ RECT Slider::HandleRect() const {
     float t = (maxValue > minValue) ?
         // Zero division guard
         ((value - minValue) / (maxValue - minValue)) : 0.0f;
-    int x = AbsX() + int(t * (width - handleWidth));
-    int y = AbsY() + sliderOffsetY;
+    int x = EffectiveX() + int(t * (width - handleWidth));
+    int y = EffectiveY() + sliderOffsetY;
     return RECT{x, y, x + handleWidth, y + handleHeight};
 }
 
@@ -97,10 +97,10 @@ int Slider::ComputeLabelHeight(HDC hdc) {
 
 void Slider::DrawTrack(HDC hdc) {
     RECT track = {
-        AbsX(),
-        AbsY() + sliderOffsetY + handleHeight/2 - 2,
-        AbsX() + width,
-        AbsY() + sliderOffsetY + handleHeight/2 + 2
+        EffectiveX(),
+        EffectiveY() + sliderOffsetY + handleHeight/2 - 2,
+        EffectiveX() + width,
+        EffectiveY() + sliderOffsetY + handleHeight/2 + 2
     };
     ScopedBrush br(hdc, trackColor.toCOLORREF());
     FillRect(hdc, &track, br.get());
@@ -125,7 +125,7 @@ void Slider::DrawLabels(HDC hdc) {
     if(!(showLabel || showValue)) return;
 
     ScopedSelectFont oldFont(hdc, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
-    RECT textRect = { AbsX(), AbsY(), AbsX() + width, AbsY() + sliderOffsetY};
+    RECT textRect = { EffectiveX(), EffectiveY(), EffectiveX() + width, EffectiveY() + sliderOffsetY};
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, labelColor.toCOLORREF());
 
@@ -167,7 +167,7 @@ void Slider::Render(HDC hdc) {
 
 void Slider::UpdateValueFromMouse(int mouseX) {
     // Calculate new value
-    RECT r = AbsRect();
+    RECT r = EffectiveRect();
     int relX = mouseX - r.left - handleWidth / 2;
     float t = (float)relX / (float)(width - handleWidth);
     t = std::clamp(t, 0.0f, 1.0f);

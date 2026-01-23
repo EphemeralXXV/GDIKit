@@ -14,16 +14,23 @@ class Container : public Widget {
         // Constructor
         Container();
 
+        // Ancestors
+        Container* GetParent() const override { return dynamic_cast<Container*>(parent); }
+
         // Child management
         void AddChild(const WidgetPtr& child);
         void RemoveChild(const WidgetPtr& child);
         void RemoveAllChildren();
         const std::vector<WidgetPtr>& Children() const { return children; }
 
-        // --- Layout policy ---
+        // --- Geometry & Layout ---
+        RECT ApplyChildMargin(const RECT& inner /*Rect - padding*/, const Widget& child) const;
+
+        // Override Widget's no-op implementation
+        Layout* GetLayout() const override { return layout.get(); }
         void SetLayout(std::unique_ptr<Layout> newLayout);
-        Layout* GetLayout() const { return layout.get(); }
         void UpdateInternalLayout() override;
+        void UpdateEffectiveGeometry() override;
 
         // --- Display & Visibility ---
         void UpdateEffectiveDisplay() override;
@@ -34,6 +41,6 @@ class Container : public Widget {
         bool FeedMouseEvent(const MouseEvent& e) override;
 
     protected:
-        std::vector<WidgetPtr> children;
         std::unique_ptr<Layout> layout;
+        std::vector<WidgetPtr> children;
     };
