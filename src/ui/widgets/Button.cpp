@@ -38,7 +38,7 @@ void Button::Render(HDC hdc) {
     SetBkMode(hdc, TRANSPARENT);
     ScopedSelectFont selFont(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    DrawTextW(hdc, text.c_str(), (int)text.size(), &innerRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+    DrawTextW(hdc, text.c_str(), -1, &innerRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 }
 
 void Button::SetOnClick(std::function<void()> cb) {

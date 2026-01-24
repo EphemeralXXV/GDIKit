@@ -13,7 +13,7 @@ enum class MouseButton { None = 0, Left = 1, Right = 2 };
 
 struct MouseEvent {
     MouseEventType type;
-    POINT pos;  // relative to widget
+    POINT pos;  // absolute (screen coordinates)
     MouseButton button;
 };
 struct Spacing {
@@ -96,9 +96,9 @@ class Widget {
 
         // Size setters
         void SetRect(int l, int t, int r, int b);       // Sets the relative rect
-        void SetPos(int x, int y);                      // Sets the absolute position
+        void SetPos(int x, int y);                      // Sets the position relative to parent
         void SetSize(int w, int h);                     // Sets the size
-        void SetPosSize(int x, int y, int w, int h);    // Sets the absolute position and size
+        void SetPosSize(int x, int y, int w, int h);    // Sets the relative position and size
 
         // Automatic geometry updates
         virtual void InvalidateLayout(); // Recompute effective geometry on logical changes

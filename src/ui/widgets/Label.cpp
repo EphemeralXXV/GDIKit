@@ -34,5 +34,5 @@ void Label::Render(HDC hdc) {
     ::SetTextColor(hdc, textColor.toCOLORREF());
     ScopedSelectFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
-    DrawTextW(hdc, text.c_str(), (int)text.size(), &setRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+    DrawTextW(hdc, text.c_str(), -1, &setRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 }
