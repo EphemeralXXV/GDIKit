@@ -1,5 +1,4 @@
-- paddings and margins
-- content/item alignments, auto sizing, box-sizing
+- box-sizing
 - scrolling
 - better text (font family, font size, text color, automatically fit box to font metrics)
 - text inputs
