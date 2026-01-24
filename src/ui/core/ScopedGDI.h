@@ -94,15 +94,15 @@ private:
 // High-level combined helpers
 // (create + select + restore + delete)
 // ------------------------------------
-class ScopedPen {
+class ScopedOwnedPen {
 public:
-    ScopedPen(HDC hdc, int style, int width, COLORREF color) : hdc(hdc) {
+    ScopedOwnedPen(HDC hdc, int style, int width, COLORREF color) : hdc(hdc) {
         pen = CreatePen(style, width, color);
         oldPen = (HPEN)SelectObject(hdc, pen);
     }
 
-    ~ScopedPen() {
-        if(hdc && oldPen) {
+    ~ScopedOwnedPen() {
+        if(hdc && oldPen && oldPen != HGDI_ERROR) {
             SelectObject(hdc, oldPen);
         }
         if(pen) {
@@ -112,8 +112,8 @@ public:
 
     HPEN get() const { return pen; }
 
-    ScopedPen(const ScopedPen&) = delete;
-    ScopedPen& operator=(const ScopedPen&) = delete;
+    ScopedOwnedPen(const ScopedOwnedPen&) = delete;
+    ScopedOwnedPen& operator=(const ScopedOwnedPen&) = delete;
 
 private:
     HDC  hdc{};
@@ -121,15 +121,15 @@ private:
     HPEN oldPen{};
 };
 
-class ScopedBrush {
+class ScopedOwnedBrush {
 public:
-    explicit ScopedBrush(HDC hdc, COLORREF color) : hdc(hdc) {
+    explicit ScopedOwnedBrush(HDC hdc, COLORREF color) : hdc(hdc) {
         brush = CreateSolidBrush(color);
         oldBrush = (HBRUSH)SelectObject(hdc, brush);
     }
 
-    ~ScopedBrush() {
-        if(hdc && oldBrush) {
+    ~ScopedOwnedBrush() {
+        if(hdc && oldBrush && oldBrush != HGDI_ERROR) {
             SelectObject(hdc, oldBrush);
         }
         if(brush) {
@@ -139,8 +139,8 @@ public:
 
     HBRUSH get() const { return brush; }
 
-    ScopedBrush(const ScopedBrush&) = delete;
-    ScopedBrush& operator=(const ScopedBrush&) = delete;
+    ScopedOwnedBrush(const ScopedOwnedBrush&) = delete;
+    ScopedOwnedBrush& operator=(const ScopedOwnedBrush&) = delete;
 
 private:
     HDC    hdc{};
@@ -148,14 +148,14 @@ private:
     HBRUSH oldBrush{};
 };
 
-class ScopedFont {
+class ScopedOwnedFont {
 public:
-    explicit ScopedFont(HDC hdc, HFONT font) : hdc(hdc), font(font) {
+    explicit ScopedOwnedFont(HDC hdc, HFONT font) : hdc(hdc), font(font) {
         oldFont = (HFONT)SelectObject(hdc, font);
     }
 
-    ~ScopedFont() {
-        if(hdc && oldFont) {
+    ~ScopedOwnedFont() {
+        if(hdc && oldFont && oldFont != HGDI_ERROR) {
             SelectObject(hdc, oldFont);
         }
         if(font) {
@@ -165,8 +165,8 @@ public:
 
     HFONT get() const { return font; }
 
-    ScopedFont(const ScopedFont&) = delete;
-    ScopedFont& operator=(const ScopedFont&) = delete;
+    ScopedOwnedFont(const ScopedOwnedFont&) = delete;
+    ScopedOwnedFont& operator=(const ScopedOwnedFont&) = delete;
 
 private:
     HDC   hdc{};

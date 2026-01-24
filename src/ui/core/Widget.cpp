@@ -387,7 +387,7 @@ void Widget::DrawBorderEdge(HDC hdc, BorderData borderData, BorderSide side) {
             br.left = br.right - borderData.thickness;
             break;
     }
-    ScopedBrush brush(hdc, borderData.color.toCOLORREF());
+    ScopedOwnedBrush brush(hdc, borderData.color.toCOLORREF());
     FillRect(hdc, &br, brush.get());
 }
 
@@ -400,7 +400,7 @@ void Widget::RenderBorder(HDC hdc) {
 
 void Widget::RenderBackground(HDC hdc) {
     if(backgroundColor.a > 0) { // only draw if non-transparent
-        ScopedBrush br(hdc, backgroundColor.toCOLORREF());
+        ScopedOwnedBrush br(hdc, backgroundColor.toCOLORREF());
         RECT r = EffectiveRect();
         FillRect(hdc, &r, br.get());
     }

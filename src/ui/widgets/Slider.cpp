@@ -102,7 +102,7 @@ void Slider::DrawTrack(HDC hdc) {
         EffectiveX() + width,
         EffectiveY() + sliderOffsetY + handleHeight/2 + 2
     };
-    ScopedBrush br(hdc, trackColor.toCOLORREF());
+    ScopedOwnedBrush br(hdc, trackColor.toCOLORREF());
     FillRect(hdc, &track, br.get());
 }
 
@@ -117,7 +117,7 @@ void Slider::DrawHandle(HDC hdc) {
     if(isDragging) { // Dragging takes precendence over hovering
         handleCol = dragColor;
     }
-    ScopedBrush br(hdc, handleCol.toCOLORREF());
+    ScopedOwnedBrush br(hdc, handleCol.toCOLORREF());
     FillRect(hdc, &hr, br.get());
 }
 

@@ -31,13 +31,13 @@ void Checkbox::Render(HDC hdc) {
     int boxSize = EffectiveHeight(); // square box same height as widget
 
     // Draw box background
-    ScopedBrush br(hdc, hovered ? hoverColor.toCOLORREF() : boxColor.toCOLORREF());
+    ScopedOwnedBrush br(hdc, hovered ? hoverColor.toCOLORREF() : boxColor.toCOLORREF());
     RECT checkboxRect = RECT{r.left, r.top, r.left + boxSize, r.top + boxSize};
     FillRect(hdc, &checkboxRect, br.get());
 
     // Draw checkmark if checked
     if(checked) {
-        ScopedBrush checkBr(hdc, checkColor.toCOLORREF());
+        ScopedOwnedBrush checkBr(hdc, checkColor.toCOLORREF());
         RECT checkRect = {r.left + 4, r.top + 4, r.left + boxSize - 4, r.top + boxSize - 4};
         FillRect(hdc, &checkRect, checkBr.get());
     }

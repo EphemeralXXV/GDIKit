@@ -35,7 +35,7 @@ void Menu::RenderResizeHandle(HDC hdc) const { // Classic triangle-like diagonal
     const int spacing = 3;
     const int cornerPadding = 2; // Distance from the corner
 
-    ScopedPen pen(hdc, PS_SOLID, 1, RGB(180,180,180));
+    ScopedOwnedPen pen(hdc, PS_SOLID, 1, RGB(180,180,180));
 
     // RECT for the diagonal lines (going from top-left to bottom-right)
     // Subtract cornerPadding only in y1 and x1 so as to preserve the hitbox

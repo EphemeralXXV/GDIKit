@@ -13,7 +13,7 @@ Label::Label(std::wstring t) :
 // Compute text geometry from its contents
 RECT Label::ComputeRect(HDC hdc) {
     SIZE size;
-    ScopedFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedSelectFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     GetTextExtentPoint32W(hdc, text.c_str(), (int)text.size(), &size);
     return RECT{AbsX(), AbsY(), AbsX() + size.cx, AbsY() + size.cy};
 } 
@@ -32,7 +32,7 @@ void Label::Render(HDC hdc) {
 
     SetBkMode(hdc, TRANSPARENT);
     ::SetTextColor(hdc, textColor.toCOLORREF());
-    ScopedFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    ScopedSelectFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
 
     DrawTextW(hdc, text.c_str(), (int)text.size(), &setRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 }
