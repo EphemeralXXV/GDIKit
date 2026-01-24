@@ -180,13 +180,15 @@ int Widget::GetLayoutHeight() const {
 // Spacing & Alignment
 void Widget::SetPadding(int all) {
     padding = {all, all, all, all};
-    // No InvalidateLayout -- padding doesn't alter effective geometry
+    InvalidateLayout();
 }
 void Widget::SetPadding(int horizontal, int vertical) {
     padding = {vertical, vertical, horizontal, horizontal};
+    InvalidateLayout();
 }
 void Widget::SetPadding(int top, int bottom, int left, int right) {
     padding = {top, bottom, left, right};
+    InvalidateLayout();
 }
 
 void Widget::SetMargin(int all) {
