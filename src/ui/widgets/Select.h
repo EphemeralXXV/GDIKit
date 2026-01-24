@@ -80,5 +80,5 @@ class Select : public Widget {
 
         // Event listeners
         std::function<void(int)> onSelectionChanged;
-        std::function<void(const MouseEvent&)> rootListener;
+        size_t rootListenerID = 0;
 };

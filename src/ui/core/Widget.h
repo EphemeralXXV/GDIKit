@@ -16,6 +16,10 @@ struct MouseEvent {
     POINT pos;  // absolute (screen coordinates)
     MouseButton button;
 };
+struct MouseListener {
+    size_t id;
+    std::function<void(const MouseEvent&)> callback;
+};
 struct Spacing {
     int top = 0;
     int bottom = 0;
@@ -138,8 +142,8 @@ class Widget {
         bool MouseInRect(POINT p) const;
 
         // Mouse listeners
-        void AddMouseListener(std::function<void(const MouseEvent&)> callback);
-        void RemoveMouseListener(const std::function<void(const MouseEvent&)>& callback);
+        size_t AddMouseListener(std::function<void(const MouseEvent&)> callback); // returns ID
+        void RemoveMouseListener(size_t id);
 
         // Pre-feeding logic (condition checks, etc.) - template method
         virtual bool InitFeedMouseEvent(const MouseEvent& e) final;
@@ -199,7 +203,8 @@ class Widget {
         bool isFlexGrow = false;
 
         // --- Mouse events  ------------------------------------------------
-        std::vector<std::function<void(const MouseEvent&)>> mouseListeners;
+        std::vector<MouseListener> mouseListeners;
+        size_t nextListenerID = 1; // 0 reserved for special cases (null, invalid, etc.)
 
         void FireMouseEvent(const MouseEvent& e);
 

@@ -106,7 +106,7 @@ void Select::Open() {
     root->AddChild(popup);
 
     // Add listener to root, because popup should close when clicking anywhere outside itself
-    rootListener = ([this](const MouseEvent& e) {
+    rootListenerID = root->AddMouseListener([this](const MouseEvent& e) {
         if(!open || e.type != MouseEventType::Down)
             return;
 
@@ -114,8 +114,6 @@ void Select::Open() {
             Close();
         }
     });
-
-    root->AddMouseListener(rootListener);
 
     open = true;
 }
@@ -127,9 +125,8 @@ void Select::Close() {
     if(root) {
         root->RemoveChild(popup);
 
-        if(rootListener) {
-            root->RemoveMouseListener(rootListener);
-            rootListener = nullptr;
+        if(rootListenerID != 0) {
+            root->RemoveMouseListener(rootListenerID);
         }
     }
 

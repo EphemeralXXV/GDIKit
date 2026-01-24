@@ -262,18 +262,20 @@ bool Widget::MouseInRect(POINT p) const {
 }
 
 // Mouse listeners
-void Widget::AddMouseListener(std::function<void(const MouseEvent&)> callback) {
-    mouseListeners.push_back(callback);
+size_t Widget::AddMouseListener(std::function<void(const MouseEvent&)> callback) {
+    size_t id = nextListenerID++;
+    mouseListeners.push_back({id, callback});
+    return id;
 }
-void Widget::RemoveMouseListener(const std::function<void(const MouseEvent&)>& callback) {
-    // Erase any listener that compares equal to the given callback
+void Widget::RemoveMouseListener(size_t id) {
     mouseListeners.erase(
-        std::remove_if(mouseListeners.begin(), mouseListeners.end(),
-            [&](const std::function<void(const MouseEvent&)>& stored) {
-                // std::function doesn't have operator==, so compare targets
-                return stored.target_type() == callback.target_type() &&
-                    stored.target<void(const MouseEvent&)>() == callback.target<void(const MouseEvent&)>();
-            }),
+        std::remove_if(
+            mouseListeners.begin(),
+            mouseListeners.end(),
+            [&](const MouseListener& l) {
+                return l.id == id;
+            }
+        ),
         mouseListeners.end()
     );
 }
@@ -298,7 +300,7 @@ bool Widget::FeedMouseEvent(const MouseEvent& e) {
 
 void Widget::FireMouseEvent(const MouseEvent& e) {
     for(auto& listener : mouseListeners) {
-        listener(e);
+        listener.callback(e);
     }
 }
 
