@@ -96,7 +96,7 @@ private:
 // ------------------------------------
 class ScopedOwnedPen {
 public:
-    ScopedOwnedPen(HDC hdc, int style, int width, COLORREF color) : hdc(hdc) {
+    explicit ScopedOwnedPen(HDC hdc, int style, int width, COLORREF color) : hdc(hdc) {
         pen = CreatePen(style, width, color);
         oldPen = (HPEN)SelectObject(hdc, pen);
     }

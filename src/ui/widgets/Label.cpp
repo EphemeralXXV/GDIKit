@@ -13,7 +13,7 @@ RECT Label::ComputeRect(HDC hdc) {
     SIZE size;
     ScopedSelectFont old(hdc, font ? font : (HFONT)GetStockObject(DEFAULT_GUI_FONT));
     GetTextExtentPoint32W(hdc, text.c_str(), (int)text.size(), &size);
-    return RECT{AbsX(), AbsY(), AbsX() + size.cx, AbsY() + size.cy};
+    return RECT{EffectiveX(), EffectiveY(), EffectiveX() + size.cx, EffectiveY() + size.cy};
 } 
 
 void Label::Render(HDC hdc) {

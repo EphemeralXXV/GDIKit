@@ -112,33 +112,31 @@ void Container::Render(HDC hdc) {
 
 bool Container::FeedMouseEvent(const MouseEvent& e) {
     bool handled = false;
-    Widget* root = GetMainContainer();
 
-    // Move should update hover state for ALL children
-    // because Move is not an exclusive event (e.g. might leave one widget and enter another in the event)
-    if(e.type == MouseEventType::Move) {
-        // First feed the event to children back-to-front (events bubble up)
-        for(auto it = children.rbegin(); it != children.rend(); ++it) {
-            if(*it) {
-                handled = (*it)->InitFeedMouseEvent(e) || handled;
+    // First feed the event to children back-to-front (events bubble up)
+    for(auto it = children.rbegin(); it != children.rend(); ++it) {
+        if(!*it) continue;
+
+        bool childHandled = (*it)->InitFeedMouseEvent(e);
+
+        if(e.type == MouseEventType::Move) {
+            // Move should update hover state for ALL children
+            // because Move is not an exclusive event (e.g. might leave one widget and enter another in the event)
+            handled = handled || childHandled;
+        }
+        else {
+            // Other mouse events: stop on first consumer (hit test behavior)
+            if(childHandled) {
+                handled = true;
+                break;
             }
         }
-        // Finally give the container itself a chance to handle the event
-        bool selfHandled = Widget::FeedMouseEvent(e);
-        handled = handled || selfHandled;
     }
 
-    // Other mouse events: stop on first consumer (hit test behavior)
-    for(auto it = children.rbegin(); it != children.rend(); ++it) {
-        if(*it && (*it)->InitFeedMouseEvent(e)) {
-            handled = true;
-            break;
-        }
-    }
-
-    // Container itself, or always root
+    // Finally, let container itself handle the event if not handled or root
+    Widget* root = GetMainContainer();
     if(!handled || this == root) {
-        handled = Widget::FeedMouseEvent(e);
+        handled = Widget::FeedMouseEvent(e) || handled;
     }
 
     return handled;

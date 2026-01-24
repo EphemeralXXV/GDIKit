@@ -150,7 +150,7 @@ class Widget {
 
         // Ignore mouse events to let them fall through to ancestors
         void SetMouseEventsIgnoring(bool ignore) { ignoreMouseEvents = ignore; }
-        bool IsIgnoringMouseEvents() { return ignoreMouseEvents; }
+        bool IsIgnoringMouseEvents() const { return ignoreMouseEvents; }
 
         // --- Appearance ---
         Color GetBackgroundColor() const { return backgroundColor; }

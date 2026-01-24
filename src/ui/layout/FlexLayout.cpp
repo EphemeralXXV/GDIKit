@@ -115,7 +115,7 @@ void FlexLayout::Apply(const RECT& innerRect) {
         }
 
         // Compute final cross axis length
-        int finalCross = childCrossLength;
+        int finalCrossLength = childCrossLength;
 
         // Make & set final effective rect for the child
         int mainPos = cursor + marginMainStart;
@@ -125,21 +125,21 @@ void FlexLayout::Apply(const RECT& innerRect) {
                 crossPos = CrossStart(innerRect) + marginCrossStart;
                 break;
             case AlignItems::Center:
-                crossPos = CrossStart(innerRect) + (containerCrossLength - finalCross - marginCrossEnd - marginCrossStart) / 2 + marginCrossStart;
+                crossPos = CrossStart(innerRect) + (containerCrossLength - finalCrossLength - marginCrossEnd - marginCrossStart) / 2 + marginCrossStart;
                 break;
             case AlignItems::End:
-                crossPos = CrossEnd(innerRect) - finalCross - marginCrossEnd;
+                crossPos = CrossEnd(innerRect) - finalCrossLength - marginCrossEnd;
                 break;
             case AlignItems::Stretch:
                 crossPos = CrossStart(innerRect) + marginCrossStart;
-                finalCross = std::max(0, containerCrossLength - marginCrossStart - marginCrossEnd);
+                finalCrossLength = std::max(0, containerCrossLength - marginCrossStart - marginCrossEnd);
                 break;
         }
         RECT r = MakeRect(
             mainPos,
             crossPos,
             childMainLength,
-            finalCross
+            finalCrossLength
         );
         SetEffectiveRect(*child, r.left, r.top, r.right, r.bottom);
                

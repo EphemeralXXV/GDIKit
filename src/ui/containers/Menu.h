@@ -36,18 +36,13 @@ class Menu : public Container {
             if(!bodyContainer) return;
             bodyContainer->SetLayout(std::move(newLayout));
         }
-        void SetBodyPadding(int all) {
+        // Variadic template for automatic forwarding
+        // Basically argv but also for variable types
+        template<typename... Args>
+        void SetBodyPadding(Args&&... args) {
             if(!bodyContainer) return;
-            bodyContainer->SetPadding(all);
+            bodyContainer->SetPadding(std::forward<decltype(args)>(args)...);
         }
-        void SetBodyPadding(int horizontal, int vertical) {
-            if(!bodyContainer) return;
-            bodyContainer->SetPadding(vertical, horizontal);
-        }
-        void SetBodyPadding(int top, int bottom, int left, int right) {
-            if(!bodyContainer) return;
-            bodyContainer->SetPadding(top, bottom, left, right);
-}
         void SetBodyBackgroundColor(const Color &color) {
             if(!bodyContainer) return;
             bodyContainer->SetBackgroundColor(color);
