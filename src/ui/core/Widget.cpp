@@ -4,16 +4,7 @@
 #include "ScopedGDI.h"
 
 // Constructor
-Widget::Widget() :
-    parent(nullptr), rect({0, 0, 0, 0}),
-    x(0), y(0), width(0), height(0),
-    preferredWidth(0), preferredHeight(0),
-    displayed(true), effectiveDisplayed(true),
-    visible(true), enabled(true), hovered(false),
-    pressed(false), mouseDownInside(false),
-    ignoreMouseEvents(false), clipChildren(false),
-    backgroundColor(Color::FromARGB(0, 0, 0, 0))
-{}
+Widget::Widget() {}
 
 // Ancestors
 void Widget::SetParent(Widget* newParent) {

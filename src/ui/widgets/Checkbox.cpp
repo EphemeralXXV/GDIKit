@@ -5,13 +5,7 @@
 #include "Color.h"
 
 Checkbox::Checkbox(std::wstring label) :
-    text(label),
-    font(nullptr),
-    checked(false),
-    boxColor(Color::FromARGB(255, 50, 50, 50)),
-    checkColor(Color::FromARGB(255, 20, 110, 220)),
-    hoverColor(Color::FromARGB(255, 80, 80, 80)),
-    textColor(Color::FromRGB(255, 255, 255))
+    text(label)
 {
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {

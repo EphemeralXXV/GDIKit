@@ -84,14 +84,14 @@ class Menu : public Container {
         void InitBody();
 
         // Window state
-        bool isCollapsed;
-        bool isDragging;
-        bool isResizing;
-        POINT dragOffset;
-        POINT resizeOffset;
-        int resizeHandleSize;
+        bool isCollapsed = false;
+        bool isDragging = false;
+        bool isResizing = false;
+        POINT dragOffset = {0, 0};
+        POINT resizeOffset = {0, 0};
+        int resizeHandleSize = 10; // 10x10 px square in the bottom-right corner
 
         // Title bar
         std::wstring title;
-        int titleBarHeight;
+        int titleBarHeight = 22;
 };

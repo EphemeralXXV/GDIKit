@@ -160,33 +160,33 @@ class Widget {
 
     protected:
         // Pointer to parent widget (container)
-        Widget* parent;
+        Widget* parent = nullptr;
 
         // Bounding rectangles relative to parent
-        RECT rect;          // LOGICAL - as set by client code
-        RECT effectiveRect; // EFFECTIVE - as computed internally and rendered on the screen
-                            // (includes offsets, margins, padding, etc.)
+        RECT rect = {0, 0, 0, 0};   // LOGICAL - as set by client code
+        RECT effectiveRect;         // EFFECTIVE - as computed internally and rendered on the screen
+                                    // (includes offsets, margins, padding, etc.)
         void SetEffectiveRect(int l, int t, int r, int b);
         // Compute and apply effective geometry from logical geometry + padding, margins, etc.
         void ApplyLogicalGeometry(); 
 
         // Widget states
-        bool displayed; // a'la CSS display
-        bool effectiveDisplayed; // Internal/inherited display state (must be non-public)
-        bool visible;   // a'la CSS visible
-        bool enabled;
-        bool clipChildren;
-        bool hovered;
-        bool pressed;
-        bool mouseDownInside; // tracks if mouse click began within widget
-        bool ignoreMouseEvents; // a'la pointer-events: none
+        bool displayed = true; // a'la CSS display
+        bool effectiveDisplayed = true; // Internal/inherited display state (must be non-public)
+        bool visible = true;   // a'la CSS visible
+        bool enabled = true;
+        bool clipChildren = false;
+        bool hovered = false;
+        bool pressed = false;
+        bool mouseDownInside = false; // tracks if mouse click began within widget
+        bool ignoreMouseEvents = false; // a'la pointer-events: none
 
         // --- Geometry -----------------------------------------------------
         // Convenient expressions of rect geometry
-        int x, y;                               // Origin (top-left) relative to parent
-        int width, height;                      // Internal widget size
-        int preferredWidth, preferredHeight;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
-        void SetPreferredSize(int w, int h);    // Should only be used internally, mainly by layouts
+        int x = 0, y = 0;                               // Origin (top-left) relative to parent
+        int width = 0, height = 0;                      // Internal widget size
+        int preferredWidth = 0, preferredHeight = 0;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
+        void SetPreferredSize(int w, int h);            // Should only be used internally, mainly by layouts
 
         // Helper functions reacting to geometry changes
         void UpdateConvenienceGeometry();       // Updates convenience geometry vars on internal geometry changes
@@ -222,7 +222,7 @@ class Widget {
         void DrawBorderEdge(HDC hdc, BorderData borderData, BorderSide side);
         void RenderBorder(HDC hdc);
         
-        Color backgroundColor;
+        Color backgroundColor = Color::FromARGB(0, 0, 0, 0);
         void RenderBackground(HDC hdc);
 
         // --- Rendering ---

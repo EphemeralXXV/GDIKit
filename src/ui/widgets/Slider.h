@@ -79,21 +79,21 @@ class Slider : public Widget {
         float step;
         float value;
 
-        int sliderOffsetY;
-        int handleWidth;
-        int handleHeight;    // Effectively the height of the slider itself (minus the labels)
-        bool showValue;
-        bool showLabel;
-        bool isDragging;
-        bool handleHovered;
+        int sliderOffsetY = 0;
+        int handleWidth = 10;
+        int handleHeight = 20;    // Effectively the height of the slider itself (minus the labels)
+        bool showValue = true;
+        bool showLabel = true;
+        bool isDragging = false;
+        bool handleHovered = false;
 
         std::wstring label;
-        Color trackColor;
-        Color handleColor;
-        Color hoverColor;
-        Color dragColor;
-        Color labelColor;
-        HFONT font;
+        Color trackColor    = Color::FromRGB(100, 100, 100);
+        Color handleColor   = Color::FromRGB(180, 180, 180);
+        Color hoverColor    = Color::FromRGB(220, 220, 220);
+        Color dragColor     = Color::FromRGB(150, 150, 255);
+        Color labelColor    = Color::FromRGB(255, 255, 255);
+        HFONT font = nullptr;
 
         std::function<void(float)> onValueChanged;
 

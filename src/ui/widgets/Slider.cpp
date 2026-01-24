@@ -15,23 +15,10 @@ Slider::Slider(
     float val = 0.5f
 ) :
     label(label),
-    font(nullptr),
     minValue(minVal),
     maxValue(maxVal),
     step(step),
-    value(val),
-    showValue(true),
-    showLabel(true),
-    sliderOffsetY(0),
-    handleWidth(10),
-    handleHeight(20),
-    trackColor(Color::FromRGB(100, 100, 100)),
-    handleColor(Color::FromRGB(180, 180, 180)),
-    hoverColor(Color::FromRGB(220, 220, 220)),
-    dragColor(Color::FromRGB(150, 150, 255)),
-    labelColor(Color::FromRGB(255, 255, 255)),
-    isDragging(false),
-    handleHovered(false)
+    value(val)
 {
     AddMouseListener([this](const MouseEvent& e) {
         switch(e.type) {

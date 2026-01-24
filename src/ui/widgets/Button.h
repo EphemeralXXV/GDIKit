@@ -37,12 +37,12 @@ class Button : public Widget {
 
     private:
         std::wstring text;
-        HFONT font;
-        Color backColor;
-        Color hoverColor;
-        Color pressColor;
-        Color borderColor;
-        Color textColor;
+        HFONT font = nullptr;
+        Color backColor     = Color::FromARGB(200,30,30,30);
+        Color hoverColor    = Color::FromARGB(220,50,50,50);
+        Color pressColor    = Color::FromARGB(255,20,110,220);
+        Color borderColor   = Color::FromRGB(0,0,0);
+        Color textColor     = Color::FromRGB(255,255,255);
 
         std::function<void()> onClick;
 };

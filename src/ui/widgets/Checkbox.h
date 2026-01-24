@@ -38,14 +38,14 @@ class Checkbox : public Widget {
         void SetOnToggle(std::function<void(bool)> cb);
 
     private:
-        bool checked;
+        bool checked = false;
 
         std::wstring text;
-        HFONT font;
-        Color boxColor;
-        Color checkColor;
-        Color hoverColor;
-        Color textColor;
+        HFONT font = nullptr;
+        Color boxColor      = Color::FromARGB(255, 50, 50, 50);
+        Color checkColor    = Color::FromARGB(255, 20, 110, 220);
+        Color hoverColor    = Color::FromARGB(255, 80, 80, 80);
+        Color textColor     = Color::FromRGB(255, 255, 255);
         
         std::function<void(bool)> onToggle; // Called when checkbox is toggled
 };

@@ -3,14 +3,7 @@
 #include "ScopedGDI.h"
 
 Menu::Menu(const std::wstring &t) :
-    isCollapsed(false),
-    isDragging(false),
-    isResizing(false),
-    dragOffset({0, 0}),
-    resizeOffset({0, 0}),
-    resizeHandleSize(10), // 10x10 px square in the bottom-right corner
-    title(t),
-    titleBarHeight(22)
+    title(t)
 {
     SetChildrenClipping(true);
     SetBackgroundColor(Color::FromARGB(180, 0, 0, 0));

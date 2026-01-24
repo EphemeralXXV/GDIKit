@@ -9,15 +9,7 @@
 
 Select::Select(std::vector<SelectItemPtr> its) :
     items(std::move(its)),
-    selectedIndex(its.empty() ? -1 : 0),
-    open(false),
-    pendingOpen(false),
-    itemHeight(18),
-    backColor(Color::FromRGB(40, 40, 40)),
-    hoverColor(Color::FromRGB(60, 60, 60)),
-    pressedColor(Color::FromRGB(50, 50, 50)),
-    borderColor(Color::FromRGB(20, 20, 20)),
-    textColor(Color::FromRGB(255, 255, 255))
+    selectedIndex(its.empty() ? -1 : 0)
 {
     SetBorder(1, borderColor, BorderSide::All);
     SetPadding(4, 0); // Add some horizontal padding so that the text doesn't touch the border

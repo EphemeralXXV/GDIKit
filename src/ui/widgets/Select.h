@@ -63,16 +63,16 @@ class Select : public Widget {
         int selectedIndex;
 
         // Popup state
-        bool open;
-        bool pendingOpen;
-        int itemHeight;
+        bool open = false;
+        bool pendingOpen = false;
+        int itemHeight = 18;
 
         // Appearance
-        Color backColor;
-        Color hoverColor;
-        Color pressedColor;
-        Color borderColor;
-        Color textColor;
+        Color backColor     = Color::FromRGB(40, 40, 40);
+        Color hoverColor    = Color::FromRGB(60, 60, 60);
+        Color pressedColor  = Color::FromRGB(50, 50, 50);
+        Color borderColor   = Color::FromRGB(20, 20, 20);
+        Color textColor     = Color::FromRGB(255, 255, 255);
 
         // Popup container (created on demand)
         std::shared_ptr<Container> popup;

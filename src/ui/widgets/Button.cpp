@@ -7,13 +7,7 @@
 #include "Button.h"
 
 Button::Button(std::wstring t) :
-    text(t),
-    font(nullptr),
-    backColor(Color::FromARGB(200,30,30,30)),
-    hoverColor(Color::FromARGB(220,50,50,50)),
-    pressColor(Color::FromARGB(255,20,110,220)),
-    borderColor(Color::FromRGB(0,0,0)),
-    textColor(Color::FromRGB(255,255,255))
+    text(t)
 {
     SetBorder(1, borderColor, BorderSide::All);
     AddMouseListener([this](const MouseEvent& e) {

@@ -5,9 +5,7 @@
 #include "ScopedGDI.h"
 
 Label::Label(std::wstring t) : 
-    text(t),
-    font(nullptr),
-    textColor(Color::FromRGB(255,255,255))
+    text(t)
 {}
 
 // Compute text geometry from its contents

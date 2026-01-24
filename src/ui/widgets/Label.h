@@ -26,6 +26,6 @@ class Label : public Widget {
 
     private:
         std::wstring text;
-        HFONT font;
-        Color textColor;
+        HFONT font = nullptr;
+        Color textColor = Color::FromRGB(255,255,255);
 };

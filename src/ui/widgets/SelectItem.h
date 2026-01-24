@@ -38,14 +38,14 @@ class SelectItem : public Widget {
         std::wstring text;
         size_t index;
         
-        bool selected;
+        bool selected = false;
 
-        HFONT font;
-        Color backColor;
-        Color hoverColor;
-        Color pressedColor;
-        Color selectedColor;
-        Color textColor;
+        HFONT font = nullptr;
+        Color backColor     = Color::FromRGB(40, 40, 40);
+        Color hoverColor    = Color::FromRGB(60, 60, 60);
+        Color pressedColor  = Color::FromRGB(70, 70, 70);
+        Color selectedColor = Color::FromRGB(50, 50, 50);
+        Color textColor     = Color::FromRGB(255, 255, 255);
 
         std::function<void(size_t)> onSelect;
 };

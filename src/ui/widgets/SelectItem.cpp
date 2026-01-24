@@ -4,14 +4,7 @@
 
 SelectItem::SelectItem(std::wstring t, size_t idx) :
     text(t),
-    font(nullptr),
-    index(idx),
-    selected(false),
-    backColor(Color::FromRGB(40, 40, 40)),
-    hoverColor(Color::FromRGB(60, 60, 60)),
-    pressedColor(Color::FromRGB(70, 70, 70)),
-    selectedColor(Color::FromRGB(50, 50, 50)),
-    textColor(Color::FromRGB(255, 255, 255))
+    index(idx)
 {
     SetPadding(4, 0); // Add some horizontal padding so that the text doesn't touch the border
     AddMouseListener([this](const MouseEvent& e) {
