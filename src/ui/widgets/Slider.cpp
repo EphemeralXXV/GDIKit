@@ -123,8 +123,10 @@ void Slider::DrawLabels(HDC hdc) {
 
     // Right-aligned numeric value
     if(showValue) {
-        std::wstring val = std::to_wstring((int)value);
-        DrawTextW(hdc, val.c_str(), -1, &textRect, DT_RIGHT | DT_SINGLELINE | DT_VCENTER);
+        // Round to 2 decimal places
+        wchar_t buf[32];
+        swprintf_s(buf, 32, L"%.2f", value);
+        DrawTextW(hdc, buf, -1, &textRect, DT_RIGHT | DT_SINGLELINE | DT_VCENTER);
     }
 }
 

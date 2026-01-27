@@ -14,4 +14,10 @@ class LayoutWidgetBridge {
         ) {
             w.SetEffectiveRect(l, t, r, b);
         }
+        static void SetLayoutSize(
+            Widget& w,
+            int width, int height
+        ) {
+            w.SetLayoutSize(width, height);
+        }
 };

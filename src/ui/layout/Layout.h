@@ -31,4 +31,11 @@ class Layout {
         ) {
             LayoutWidgetBridge::SetEffectiveRect(child, l, t, r, b);
         }
+        // Proxy methods for derived layouts to use the LayoutWidgetBridge
+        static void SetLayoutSize(
+            Widget& child,
+            int width, int height
+        ) {
+            LayoutWidgetBridge::SetLayoutSize(child, width, height);
+        }
 };

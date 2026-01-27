@@ -96,6 +96,11 @@ void Widget::SetPreferredSize(int w, int h) {
     preferredHeight = h;
     InvalidateLayout();
 }
+void Widget::SetLayoutSize(int w, int h) {
+    layoutWidth = w;
+    layoutHeight = h;
+    // Don't invalidate here to avoid infinite loops with layouts
+}
 
 RECT Widget::ComputeInnerRect() const {
     RECT r = EffectiveRect();
@@ -168,12 +173,12 @@ void Widget::UpdateEffectiveGeometry() {
     }
     ApplyLogicalGeometry();
 }
-
-// Get final internal geometry computed from preferred size
-int Widget::GetLayoutWidth() const {
+        
+// Get preferred size set by client code (default to current size if not set)
+int Widget::GetPreferredWidth() const {
     return preferredWidth > 0 ? preferredWidth : width;
 }
-int Widget::GetLayoutHeight() const {
+int Widget::GetPreferredHeight() const {
     return preferredHeight > 0 ? preferredHeight : height;
 }
 

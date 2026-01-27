@@ -83,6 +83,9 @@ class FlexLayout : public Layout {
         bool MainIsAuto(bool isAutoWidth, bool isAutoHeight) {
             return direction == FlexDirection::Row ? isAutoWidth : isAutoHeight;
         }
+        bool CrossIsAuto(bool isAutoWidth, bool isAutoHeight) {
+            return direction == FlexDirection::Row ? isAutoHeight : isAutoWidth;
+        }
 
         int ChildMainLength(int preferredWidth, int preferredHeight) {
             return direction == FlexDirection::Row ? preferredWidth : preferredHeight;
@@ -92,6 +95,9 @@ class FlexLayout : public Layout {
         }
         int ChildTotalMarginMain(Spacing margin) {
             return direction == FlexDirection::Row ? margin.left + margin.right : margin.top + margin.bottom;
+        }
+        int ChildTotalMarginCross(Spacing margin) {
+            return direction == FlexDirection::Row ? margin.top + margin.bottom : margin.left + margin.right;
         }
         int ChildMarginMainStart(Spacing margin) {
             return direction == FlexDirection::Row ? margin.left : margin.top;

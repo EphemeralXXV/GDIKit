@@ -34,19 +34,22 @@ void FlexLayout::Apply(const RECT& innerRect) {
 
     // --- PASS 1: Measure ---
     int totalFixedMainLength = 0;       // Sum of all fixed main lengths + margins
-    int totalGrowingItems = 0;          // Count of children that grow
+    int totalGrowingItems = 0;          // Count of children that grow along the main axis
+    int maxChildCrossLength = 0;        // Max cross length among children (for container auto-sizing)
 
     for(auto& child : children) {
         if(!child) continue;
 
         const Spacing& m = child->GetMargin();
 
+        // Measure child main length + margins
         int childMainLength = ChildMainLength(
             child->GetLayoutWidth(),
             child->GetLayoutHeight()
         );
         int childMarginMain = ChildTotalMarginMain(m);
 
+        // Count flex-grow items and accumulate fixed lengths
         if(child->IsFlexGrow()) {
             totalGrowingItems++;
             totalFixedMainLength += childMarginMain; // margins still count
@@ -54,6 +57,11 @@ void FlexLayout::Apply(const RECT& innerRect) {
         else {
             totalFixedMainLength += childMainLength + childMarginMain;
         }
+
+        // Track max cross length
+        int childCrossLength = ChildCrossLength(child->GetLayoutWidth(), child->GetLayoutHeight());
+        childCrossLength += ChildTotalMarginCross(m);
+        maxChildCrossLength = std::max(maxChildCrossLength, childCrossLength);
     }
 
     int totalSpacing = spacing * std::max(0, int(children.size() - 1));
@@ -151,33 +159,54 @@ void FlexLayout::Apply(const RECT& innerRect) {
         }
     }
 
-    if(
-        // Auto stretch container to content if main length is 0 (auto)
-        MainIsAuto(container->IsAutoWidth(), container->IsAutoHeight()) &&
-        // But only if at least one child has fixed size
-        totalGrowingItems < children.size()
-    ) {
-        Spacing padding = container->GetPadding();
-        Border border = container->GetBorder();
-        RECT effectiveRect = container->EffectiveRect();
+    // --- PASS 3: Adjust container size if auto-sizing ---
+    RECT effectiveRect = container->EffectiveRect();
+    Spacing padding = container->GetPadding();
+    Border border = container->GetBorder();
+    RECT finalRect = effectiveRect;
 
+    // Auto stretch container to content if auto sizing
+    bool autoSizeMain = MainIsAuto(
+        container->IsAutoWidth(),
+        container->IsAutoHeight()
+    );
+    bool autoSizeCross = CrossIsAuto(
+        container->IsAutoWidth(),
+        container->IsAutoHeight()
+    );
+
+    if(autoSizeMain) {
+        int mainStartPos = MainStart(innerRect);    // where the main axis starts
+        int mainLength = cursor - mainStartPos;     // total length of children + spacing
         if(direction == FlexDirection::Row) {
-            SetEffectiveRect(
-                *container,
-                effectiveRect.left,
-                effectiveRect.top,
-                cursor + padding.right + border.right.thickness,
-                effectiveRect.bottom
-            );
+            finalRect.left = mainStartPos;
+            finalRect.right = finalRect.left + mainLength + padding.left + padding.right + border.left.thickness + border.right.thickness;
         }
         else {
-            SetEffectiveRect(
-                *container,
-                effectiveRect.left,
-                effectiveRect.top,
-                effectiveRect.right,
-                cursor + padding.bottom + border.bottom.thickness
-            );
+            finalRect.top = mainStartPos;
+            finalRect.bottom = finalRect.top + mainLength + padding.top + padding.bottom + border.top.thickness + border.bottom.thickness;
         }
     }
+    if(autoSizeCross) {
+        if(direction == FlexDirection::Row) {
+            finalRect.bottom = effectiveRect.top + border.top.thickness + padding.top + maxChildCrossLength + padding.bottom + border.bottom.thickness;
+        } 
+        else {
+            finalRect.right = effectiveRect.left + border.left.thickness + padding.left + maxChildCrossLength + padding.right + border.right.thickness;
+        }
+    }
+
+    SetEffectiveRect(
+        *container,
+        finalRect.left,
+        finalRect.top,
+        finalRect.right,
+        finalRect.bottom
+    );
+
+    SetLayoutSize(
+        *container,
+        finalRect.right - finalRect.left,
+        finalRect.bottom - finalRect.top
+    );
 }

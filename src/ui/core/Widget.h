@@ -66,8 +66,8 @@ class Widget {
         int GetWidth() const { return width; }
         int GetHeight() const { return height; }
 
-        int GetPreferredWidth() const { return preferredWidth; }
-        int GetPreferredHeight() const { return preferredHeight; }
+        int GetPreferredWidth() const;
+        int GetPreferredHeight() const;
 
         RECT GetRect() const { return rect; }
         RECT ComputeInnerRect() const; // Compute rect - padding - border
@@ -94,15 +94,16 @@ class Widget {
         // As well as the setter and the field itself
         virtual Layout* GetLayout() const { return nullptr; }
 
-        // Get final internal geometry computed from preferred size
-        int GetLayoutWidth() const;
-        int GetLayoutHeight() const;
+        // Get final internal geometry computed from layout
+        int GetLayoutWidth() const { return layoutWidth >= 0 ? layoutWidth : GetPreferredWidth(); };
+        int GetLayoutHeight() const { return layoutHeight >= 0 ? layoutHeight : GetPreferredHeight(); };
 
-        // Size setters
+        // Geometry setters
         void SetRect(int l, int t, int r, int b);       // Sets the relative rect
         void SetPos(int x, int y);                      // Sets the position relative to parent
         void SetSize(int w, int h);                     // Sets the size
         void SetPosSize(int x, int y, int w, int h);    // Sets the relative position and size
+        void SetPreferredSize(int w, int h);            // Sets the size hint
 
         // Automatic geometry updates
         virtual void InvalidateLayout(); // Recompute effective geometry on logical changes
@@ -188,9 +189,10 @@ class Widget {
         // --- Geometry -----------------------------------------------------
         // Convenient expressions of rect geometry
         int x = 0, y = 0;                               // Origin (top-left) relative to parent
-        int width = 0, height = 0;                      // Internal widget size
-        int preferredWidth = 0, preferredHeight = 0;    // Widget size as intended by client code (excludes paddings, margins, labels, etc.)
-        void SetPreferredSize(int w, int h);            // Should only be used internally, mainly by layouts
+        int width = 0, height = 0;                      // Widget size as intended by client code (excludes paddings, margins, etc.)
+        int preferredWidth = 0, preferredHeight = 0;    // Widget size hint set by client code
+        int layoutWidth = -1, layoutHeight = -1;        // Final size computed by layout system (mainly for auto sizing); -1 means unset
+        void SetLayoutSize(int w, int h);               // Should only be used internally, mainly by layouts
 
         // Helper functions reacting to geometry changes
         void UpdateConvenienceGeometry();       // Updates convenience geometry vars on internal geometry changes
