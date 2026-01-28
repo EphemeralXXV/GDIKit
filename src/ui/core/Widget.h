@@ -162,6 +162,7 @@ class Widget {
 
         // --- Rendering ---
         virtual void InitRender(HDC hdc) final; // Pre-render logic (condition checks, etc.) - template method
+        void SetOnRender(std::function<void()> cb) { onRender = std::move(cb); }
 
     protected:
         // Pointer to parent widget (container)
@@ -234,4 +235,5 @@ class Widget {
 
         // --- Rendering ---
         virtual void Render(HDC hdc) {}; // Actual render logic
+        std::function<void()> onRender; // Optional custom render callback (e.g. update state via external events)
 };

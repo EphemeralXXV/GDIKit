@@ -415,6 +415,9 @@ void Widget::InitRender(HDC hdc) {
     RenderBackground(hdc);
     Render(hdc);
     RenderBorder(hdc);
+    if(onRender) {
+        onRender();
+    }
     RestoreDC(hdc, saved);
 }
 
