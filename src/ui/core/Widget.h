@@ -20,6 +20,13 @@ struct MouseListener {
     size_t id;
     std::function<void(const MouseEvent&)> callback;
 };
+enum class Anchor { // Dictates which rect corners x,y refer to
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight
+};
+
 struct Spacing {
     int top = 0;
     int bottom = 0;
@@ -132,8 +139,12 @@ class Widget {
         void SetAutoWidth(bool isAuto);
         bool IsAutoHeight() const { return heightProperties.isAuto; }
         void SetAutoHeight(bool isAuto);
+
         bool IsFlexGrow() const { return isFlexGrow; }
         void SetFlexGrow(bool flexGrow) { isFlexGrow = flexGrow; }
+
+        Anchor GetAnchor() const { return anchor; }
+        void SetAnchor(Anchor newAnchor) { anchor = newAnchor; }
 
         // --- Display & Visibility -----------------------------------------
         virtual void UpdateEffectiveDisplay();  // Updates actual display state based on ancestors state
@@ -204,6 +215,7 @@ class Widget {
         DimensionProperties widthProperties;
         DimensionProperties heightProperties;
         bool isFlexGrow = false;
+        Anchor anchor = Anchor::TopLeft;
 
         // --- Mouse events  ------------------------------------------------
         std::vector<MouseListener> mouseListeners;

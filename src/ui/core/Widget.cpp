@@ -122,6 +122,7 @@ void Widget::UpdateConvenienceGeometry() {
     height = rect.bottom - rect.top;
 }
 void Widget::ApplyLogicalGeometry() {
+    // Get parent inner rect for border+padding offset from parent edges
     RECT parentInnerRect;
     if(parent) {
         parentInnerRect = parent->ComputeInnerRect(); // derive from parent if present
@@ -130,21 +131,44 @@ void Widget::ApplyLogicalGeometry() {
         parentInnerRect = {0, 0, 0, 0}; // root or parentless widget
     }
 
-    // Start from logical position
-    int ex = x + margin.left;
-    int ey = y + margin.top;
-    int ew = width - margin.left - margin.right;
-    int eh = height - margin.top - margin.bottom;
-
-    // Apply alignment/padding inside parent inner rect
-    ex += parentInnerRect.left;
-    ey += parentInnerRect.top;
+    // Compute effective width/height = logical size - margins
+    int effectiveWidth = width - margin.left - margin.right;
+    int effectiveHeight = height - margin.top - margin.bottom;
 
     // Negative dimensions safeguard
-    ew = std::max(0, ew);
-    eh = std::max(0, eh);
+    effectiveWidth = std::max(0, effectiveWidth);
+    effectiveHeight = std::max(0, effectiveHeight);
 
-    SetEffectiveRect(ex, ey, ex + ew, ey + eh);
+    // Compute effective left/top based on anchor
+    // (x,y refer to different corners based on anchor; width and height have fixed meaning)
+    int effectiveLeft = 0;
+    int effectiveTop = 0;
+
+    switch(anchor) {
+        case Anchor::TopLeft:
+            effectiveLeft = parentInnerRect.left + x + margin.left;
+            effectiveTop = parentInnerRect.top + y + margin.top;
+            break;
+
+        case Anchor::TopRight:
+            effectiveLeft = parentInnerRect.right - (x + width + margin.right);
+            effectiveTop = parentInnerRect.top + y + margin.top;
+            break;
+
+        case Anchor::BottomLeft:
+            effectiveLeft = parentInnerRect.left + x + margin.left;
+            effectiveTop = parentInnerRect.bottom - (y + height + margin.bottom);
+            break;
+
+        case Anchor::BottomRight:
+            effectiveLeft = parentInnerRect.right - (x + width + margin.right);
+            effectiveTop = parentInnerRect.bottom - (y + height + margin.bottom);
+            break;
+    }
+    effectiveLeft += parentInnerRect.left;
+    effectiveTop += parentInnerRect.top;
+
+    SetEffectiveRect(effectiveLeft, effectiveTop, effectiveLeft + effectiveWidth, effectiveTop + effectiveHeight);
 }
 void Widget::SetEffectiveRect(int l, int t, int r, int b) {
     effectiveRect = {l, t, r, b};
