@@ -72,11 +72,16 @@ void Menu::InitHeader() {
         }
     });
 
+    
     titleLabel = std::make_shared<Label>(title);
     titleLabel->SetSize(0, titleBarHeight);
     titleLabel->SetFlexGrow(true);
     titleLabel->SetMouseEventsIgnoring(true); // Ignore mouse events to allow title bar dragging
     titleLabel->SetTextColor(Color::FromRGB(220, 220, 220));
+    titleLabel->SetAutoWidth(false);
+    titleLabel->SetAutoHeight(false);
+    titleLabel->SetHAlign(TextAlignH::Center);
+    titleLabel->SetVAlign(TextAlignV::Center);
 
     closeButton = std::make_shared<Button>(L"×");
     closeButton->SetSize(titleBarHeight - 4, titleBarHeight - 5);
@@ -162,12 +167,6 @@ void Menu::SetShowTitleBar(bool show) {
 }
 
 void Menu::Render(HDC hdc) {    
-    // Clip children to menu bounds if overflow is hidden
-    if(clipChildren) {
-        RECT r = EffectiveRect();
-        IntersectClipRect(hdc, r.left, r.top, r.right, r.bottom);
-    }
-
     // Render children in order
     Container::Render(hdc);
 

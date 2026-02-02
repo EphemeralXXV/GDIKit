@@ -131,9 +131,13 @@ void Widget::ApplyLogicalGeometry() {
         parentInnerRect = {0, 0, 0, 0}; // root or parentless widget
     }
 
+    // Use layout size if auto
+    int w = widthProperties.isAuto ? layoutWidth : width;
+    int h = heightProperties.isAuto ? layoutHeight : height;
+
     // Compute effective width/height = logical size - margins
-    int effectiveWidth = width - margin.left - margin.right;
-    int effectiveHeight = height - margin.top - margin.bottom;
+    int effectiveWidth = w - margin.left - margin.right;
+    int effectiveHeight = h - margin.top - margin.bottom;
 
     // Negative dimensions safeguard
     effectiveWidth = std::max(0, effectiveWidth);
@@ -151,18 +155,18 @@ void Widget::ApplyLogicalGeometry() {
             break;
 
         case Anchor::TopRight:
-            effectiveLeft = parentInnerRect.right - (x + width + margin.right);
+            effectiveLeft = parentInnerRect.right - (x + w + margin.right);
             effectiveTop = parentInnerRect.top + y + margin.top;
             break;
 
         case Anchor::BottomLeft:
             effectiveLeft = parentInnerRect.left + x + margin.left;
-            effectiveTop = parentInnerRect.bottom - (y + height + margin.bottom);
+            effectiveTop = parentInnerRect.bottom - (y + h + margin.bottom);
             break;
 
         case Anchor::BottomRight:
-            effectiveLeft = parentInnerRect.right - (x + width + margin.right);
-            effectiveTop = parentInnerRect.bottom - (y + height + margin.bottom);
+            effectiveLeft = parentInnerRect.right - (x + w + margin.right);
+            effectiveTop = parentInnerRect.bottom - (y + h + margin.bottom);
             break;
     }
     effectiveLeft += parentInnerRect.left;
@@ -436,6 +440,17 @@ void Widget::InitRender(HDC hdc) {
     
     // Render must not call SaveDC/RestoreDC again - it's taken care of here
     int saved = SaveDC(hdc);
+
+    if(clipChildren) {
+        IntersectClipRect(
+            hdc,
+            effectiveRect.left,
+            effectiveRect.top,
+            effectiveRect.right,
+            effectiveRect.bottom
+        );
+    }
+
     RenderBackground(hdc);
     Render(hdc);
     RenderBorder(hdc);
