@@ -8,9 +8,9 @@
 #include "ScopedGDI.h"
 
 Select::Select(std::vector<SelectItemPtr> its) :
-    items(std::move(its)),
     selectedIndex(its.empty() ? -1 : 0)
 {
+    SetItems(its);
     SetBorder(1, borderColor, BorderSide::All);
     SetPadding(4, 0); // Add some horizontal padding so that the text doesn't touch the border
     AddMouseListener([this](const MouseEvent& e) {
@@ -33,7 +33,11 @@ Select::SelectItemPtr Select::GetSelectedItem() const {
 }
 
 void Select::SetItems(std::vector<SelectItemPtr> newItems) {
-    items = std::move(newItems);
+    items.clear();
+    for(size_t i = 0; i < newItems.size(); i++) {
+        newItems[i]->SetIndex(i); // Must automatically set index if not set explicitly
+        items.push_back(newItems[i]);
+    }
     selectedIndex = items.empty() ? -1 : 0;
 }
 
@@ -65,6 +69,7 @@ void Select::SetOnSelectionChanged(std::function<void(int)> cb) {
 }
 
 void Select::InitPopup() {
+    if(popup) return;
     popup = std::make_shared<Container>();
     
     popup->SetBackgroundColor(Color::FromARGB(230, 30, 30, 30));
@@ -78,12 +83,18 @@ void Select::InitPopup() {
         items[selectedIndex]->SetSelected(true);
     }
     
+    // On each item's select: set selected index and close popup
     for(size_t i = 0; i < items.size(); ++i) {
         SelectItemPtr& it = items[i];
         it->SetSize(0, itemHeight);
 
-        it->SetOnSelect([this, it, i](int) {
+        // Preserve the onSelect callback if one was set at initialization
+        auto originalCallback = it->onSelect;
+        it->SetOnSelect([this, originalCallback, i]() {
             SetSelectedIndex((int)i);
+            if(originalCallback) {
+                originalCallback();
+            }
             Close();
         });
 
@@ -95,6 +106,9 @@ void Select::Open() {
     if(!popup) {
         // Lazy initialization
         InitPopup();
+    }
+    else {
+        popup->SetVisible(true);
     }
 
     std::shared_ptr<Root> root = Root::Get();
@@ -138,7 +152,7 @@ void Select::Close() {
         item->ResetTransientStates();
     }
 
-    popup.reset();
+    popup->SetVisible(false);
     open = false;
 }
 

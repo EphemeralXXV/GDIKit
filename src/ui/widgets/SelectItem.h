@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 #include "Widget.h"
@@ -7,10 +9,16 @@ class SelectItem : public Widget {
     public:
         friend class Select; // Allow Select to fully manage SelectItem
 
-        SelectItem(std::wstring text, size_t index);
+        SelectItem(std::wstring text, std::string value);
 
         const std::wstring& GetText() const { return text; }
+        void SetText(std::wstring t) { text = t; }
+
+        const std::string& GetValue() const { return value; }
+        void SetValue(std::string p) { value = std::move(p); }
+
         size_t GetIndex() const { return index; }
+        void SetIndex(size_t idx) { index = idx; }
 
         void SetSelected(bool sel) { selected = sel; }
         bool IsSelected() const { return selected; }
@@ -32,11 +40,12 @@ class SelectItem : public Widget {
 
         void Render(HDC hdc) override;
 
-        void SetOnSelect(std::function<void(size_t)> cb);
+        void SetOnSelect(std::function<void()> cb);
 
     private:
-        std::wstring text;
         size_t index;
+        std::wstring text;
+        std::string value; // Internal value, akin to HTML <option> value attribute
         
         bool selected = false;
 
@@ -47,5 +56,5 @@ class SelectItem : public Widget {
         Color selectedColor = Color::FromRGB(50, 50, 50);
         Color textColor     = Color::FromRGB(255, 255, 255);
 
-        std::function<void(size_t)> onSelect;
+        std::function<void()> onSelect;
 };

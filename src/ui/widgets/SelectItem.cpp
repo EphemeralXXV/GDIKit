@@ -2,21 +2,20 @@
 #include "Color.h"
 #include "ScopedGDI.h"
 
-SelectItem::SelectItem(std::wstring t, size_t idx) :
-    text(t),
-    index(idx)
+SelectItem::SelectItem(std::wstring t, std::string v) :
+    text(t), value(v)
 {
     SetPadding(4, 0); // Add some horizontal padding so that the text doesn't touch the border
     AddMouseListener([this](const MouseEvent& e) {
         if(e.type == MouseEventType::Click) {
             if(onSelect) {
-                onSelect(index);
+                onSelect();
             }
         }
     });
 }
 
-void SelectItem::SetOnSelect(std::function<void(size_t)> cb) {
+void SelectItem::SetOnSelect(std::function<void()> cb) {
     onSelect = std::move(cb);
 }
 
